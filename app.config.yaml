@@ -1,0 +1,68 @@
+application:
+  actions: apps/experience-qa/server/actions
+  web: apps/experience-qa/client
+  runtimeManifest:
+    packages:
+      experience-qa:
+        license: Apache-2.0
+        actions:
+
+          chat:
+            function: apps/experience-qa/server/actions/chat/index.js
+            web: 'yes'
+            runtime: nodejs:22
+            limits:
+              timeout: 60000    # 60s — LLM calls can be slow
+              memory: 512
+            annotations:
+              require-adobe-auth: true
+
+          plans:
+            function: apps/experience-qa/server/actions/plans/index.js
+            web: 'yes'
+            runtime: nodejs:22
+            limits:
+              timeout: 30000
+              memory: 256
+            annotations:
+              require-adobe-auth: true
+
+          runs:
+            function: apps/experience-qa/server/actions/runs/index.js
+            web: 'yes'
+            runtime: nodejs:22
+            limits:
+              timeout: 3600000  # 60min — long-running test executions
+              memory: 1024
+            annotations:
+              require-adobe-auth: true
+
+          schedules:
+            function: apps/experience-qa/server/actions/schedules/index.js
+            web: 'yes'
+            runtime: nodejs:22
+            limits:
+              timeout: 30000
+              memory: 256
+            annotations:
+              require-adobe-auth: true
+
+          settings:
+            function: apps/experience-qa/server/actions/settings/index.js
+            web: 'yes'
+            runtime: nodejs:22
+            limits:
+              timeout: 10000
+              memory: 256
+            annotations:
+              require-adobe-auth: true
+
+          webhooks:
+            function: apps/experience-qa/server/actions/webhooks/index.js
+            web: 'raw'          # raw = no body parsing, needed for signature verification
+            runtime: nodejs:22
+            limits:
+              timeout: 30000
+              memory: 256
+            annotations:
+              require-adobe-auth: false   # AEM I/O Events calls this, not a user

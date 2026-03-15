@@ -1,0 +1,30 @@
+{
+  "name": "experience-qa",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Developer Wrokflows Platform",
+  "workspaces": [
+    "apps/experience-qa/client",
+    "apps/experience-qa/server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm run dev --workspace=apps/experience-qa/server\" \"npm run dev --workspace=apps/experience-qa/client\"",
+    "dev:server": "npm run dev --workspace=apps/experience-qa/server",
+    "dev:client": "npm run dev --workspace=apps/experience-qa/client",
+    "build": "npm run build --workspace=apps/experience-qa/client",
+    "deploy": "aio app deploy",
+    "deploy:dry": "aio app deploy --dry-run",
+    "lint": "eslint apps/",
+    "test": "npm test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "concurrently": "^8.2.2",
+    "eslint": "^9.39.4",
+    "eslint-plugin-n": "^17.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

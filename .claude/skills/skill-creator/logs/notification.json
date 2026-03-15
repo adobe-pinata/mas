@@ -1,0 +1,58 @@
+[
+  {
+    "session_id": "f795b35d-2cf7-4e43-9dca-697287e34746",
+    "transcript_path": "/Users/rivero/.claude/projects/-Users-rivero-ai-experience-qa/f795b35d-2cf7-4e43-9dca-697287e34746.jsonl",
+    "cwd": "/Users/rivero/ai/experience-qa/.claude/skills/skill-creator",
+    "hook_event_name": "Notification",
+    "message": "Claude is waiting for your input",
+    "notification_type": "idle_prompt"
+  },
+  {
+    "session_id": "f795b35d-2cf7-4e43-9dca-697287e34746",
+    "transcript_path": "/Users/rivero/.claude/projects/-Users-rivero-ai-experience-qa/f795b35d-2cf7-4e43-9dca-697287e34746.jsonl",
+    "cwd": "/Users/rivero/ai/experience-qa/.claude/skills/skill-creator",
+    "hook_event_name": "Notification",
+    "message": "Claude is waiting for your input",
+    "notification_type": "idle_prompt"
+  },
+  {
+    "session_id": "f795b35d-2cf7-4e43-9dca-697287e34746",
+    "transcript_path": "/Users/rivero/.claude/projects/-Users-rivero-ai-experience-qa/f795b35d-2cf7-4e43-9dca-697287e34746.jsonl",
+    "cwd": "/Users/rivero/ai/experience-qa/.claude/skills/skill-creator",
+    "hook_event_name": "Notification",
+    "message": "Claude is waiting for your input",
+    "notification_type": "idle_prompt"
+  },
+  {
+    "session_id": "f795b35d-2cf7-4e43-9dca-697287e34746",
+    "transcript_path": "/Users/rivero/.claude/projects/-Users-rivero-ai-experience-qa/f795b35d-2cf7-4e43-9dca-697287e34746.jsonl",
+    "cwd": "/Users/rivero/ai/experience-qa/.claude/skills/skill-creator",
+    "hook_event_name": "Notification",
+    "message": "Claude is waiting for your input",
+    "notification_type": "idle_prompt"
+  },
+  {
+    "session_id": "f795b35d-2cf7-4e43-9dca-697287e34746",
+    "transcript_path": "/Users/rivero/.claude/projects/-Users-rivero-ai-experience-qa/f795b35d-2cf7-4e43-9dca-697287e34746.jsonl",
+    "cwd": "/Users/rivero/ai/experience-qa/.claude/skills/skill-creator",
+    "hook_event_name": "Notification",
+    "message": "Claude is waiting for your input",
+    "notification_type": "idle_prompt"
+  },
+  {
+    "session_id": "f795b35d-2cf7-4e43-9dca-697287e34746",
+    "transcript_path": "/Users/rivero/.claude/projects/-Users-rivero-ai-experience-qa/f795b35d-2cf7-4e43-9dca-697287e34746.jsonl",
+    "cwd": "/Users/rivero/ai/experience-qa/.claude/skills/skill-creator",
+    "hook_event_name": "Notification",
+    "message": "Claude is waiting for your input",
+    "notification_type": "idle_prompt"
+  },
+  {
+    "session_id": "f795b35d-2cf7-4e43-9dca-697287e34746",
+    "transcript_path": "/Users/rivero/.claude/projects/-Users-rivero-ai-experience-qa/f795b35d-2cf7-4e43-9dca-697287e34746.jsonl",
+    "cwd": "/Users/rivero/ai/experience-qa/.claude/skills/skill-creator",
+    "hook_event_name": "Notification",
+    "message": "Claude is waiting for your input",
+    "notification_type": "idle_prompt"
+  }
+]

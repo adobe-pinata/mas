@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "react-spectrum-s2": {
+      "command": "npx",
+      "args": ["@react-spectrum/mcp@latest"]
+    }
+  }
+}

@@ -1,0 +1,429 @@
+# QA Client Implementation Expertise
+# Adobe Experience QA Platform — React SPA frontend
+#
+# USAGE: Mental model for all qa-client tasks.
+# Every file path and function name is verified against the real codebase.
+# Run /experts:qa-client:self-improve after any client changes.
+
+overview:
+  description: "React 18 SPA (Vite) that drives the QA platform chat-to-run workflow: chat with AI to generate test plans, review and edit plans inline, launch multi-geo runs, and browse history — all consuming the AIO Runtime serverless backend via lib/api.js."
+  core_insight: "No Redux, no global state manager. State is local to each page component. The only cross-page state is conversationId persisted to sessionStorage. All server communication goes through lib/api.js fetch wrappers. Polling (not SSE/WebSocket) is used for run progress — RunObserver polls every 4s."
+  architecture_pattern: "React.lazy page routing + flat component tree (no deep prop drilling). Inline CSS objects on every component — no CSS modules, no Tailwind. Adobe React Spectrum is mounted at the Provider level but only Toast uses Spectrum components directly."
+  value_proposition:
+    - "Chat-first UX: user pastes a URL, AI generates a plan, plan is editable inline before running"
+    - "Multi-geo batch runs: BatchProgress tabs per geo, each polled independently"
+    - "Run history with expand-in-place RunSummary and re-run action"
+    - "Settings page: hot-configure AI models, Jira, Slack, and QA thresholds without restart"
+
+# ─── KEY FILES ────────────────────────────────────────────────────────────────
+
+key_files:
+  entry:
+    main:
+      file: "apps/experience-qa/client/src/main.jsx"
+      purpose: "ReactDOM.createRoot entry; wraps app in StrictMode + Spectrum Provider (defaultTheme, light) + BrowserRouter"
+    app:
+      file: "apps/experience-qa/client/src/App.jsx"
+      purpose: "Root layout: Sidebar (left rail) + main scroll area with React.lazy route tree + ToastContainer"
+      routes:
+        - "/ → ChatPage"
+        - "/history → HistoryPage"
+        - "/settings → SettingsPage"
+        - "/runs/:id → RunDetailPage"
+
+  api:
+    api_js:
+      file: "apps/experience-qa/client/src/lib/api.js"
+      purpose: "All fetch wrappers. Base URL from VITE_API_URL env var. All functions throw Error on non-2xx. 204 returns null."
+      key_functions:
+        request: "request(path, options) → Promise<any> — core fetch helper; JSON Content-Type always set"
+        buildQuery: "buildQuery(params) → string — omits null/undefined; returns empty string when no params"
+        listPlans: "listPlans(params?) → { plans, total, limit, offset }"
+        createPlan: "createPlan(body) → { plan }"
+        getPlan: "getPlan(id) → { plan }"
+        updatePlan: "updatePlan(id, body) → { plan }"
+        deletePlan: "deletePlan(id) → { deleted }"
+        listRuns: "listRuns(params?) → { runs, total, limit, offset } — supports planId, batchId, limit, offset"
+        startRun: "startRun({ planId, geos? }) → { batchId, runIds, geos } — server returns 202 immediately; geos overrides plan defaults when provided"
+        getRun: "getRun(id) → { run }"
+        cancelRun: "cancelRun(id) → { status, id } — sends DELETE"
+        getGeoStatus: "getGeoStatus(id) → { geoStatus } — GET /api/runs/:id/geo-status"
+        listSchedules: "listSchedules(params?) → { schedules }"
+        createSchedule: "createSchedule(body) → { schedule }"
+        getSchedule: "getSchedule(id) → { schedule }"
+        updateSchedule: "updateSchedule(id, body) → { schedule }"
+        deleteSchedule: "deleteSchedule(id) → null (204)"
+        getSettings: "getSettings() → { settings }"
+        updateSettings: "updateSettings(body) → { settings }"
+        sendMessage: "sendMessage(body) → { type, conversationId, plan?, text? }"
+        listConversations: "listConversations() → { conversations: [{ id, createdAt, updatedAt, lastMessageAt, preview }] }"
+        getMessages: "getMessages(conversationId) → { messages: [{ _id, conversationId, sequence, role, content, createdAt }] }"
+    run_observer:
+      file: "apps/experience-qa/client/src/lib/runObserver.js"
+      purpose: "Polling class for live run progress. Polls getRun() every 4s, emits per-step callbacks, stops on terminal status."
+      key_functions:
+        constructor: "constructor(runId, { onStep, onComplete, onError, interval=4000 }) — all callbacks optional"
+        start: "start() → this — idempotent; fires immediate first poll then sets interval"
+        stop: "stop() → void — clears interval; idempotent"
+        _poll: "_poll() — calls getRun(), fires onStep for each new step (delta from _knownStepCount), fires onComplete + stop() on terminal status"
+      terminal_statuses: "completed | failed | cancelled | error"
+
+  pages:
+    chat:
+      file: "apps/experience-qa/client/src/pages/ChatPage.jsx"
+      purpose: "Primary chat interface. Manages conversation, message list, plan responses, and run launch."
+      key_state:
+        conversationId: "string|null — persisted to sessionStorage under key 'xqa_conversation_id'; seeded from ?c= URL param on mount"
+        messages: "array of { role, content, type?, plan?, onRun? }"
+        isLoading: "boolean — true while awaiting sendMessage()"
+        activeRun: "object|null — set by RunObserver.onComplete"
+        runSteps: "array — appended by RunObserver.onStep"
+        activeBatch: "object|null — { batchId, geos, runIds } for multi-geo runs"
+        searchParams: "useSearchParams() — read ?c= on mount, then cleared via setSearchParams({}, { replace: true })"
+      key_functions:
+        handleSend: "handleSend(text, url?) — calls sendMessage(); appends user + assistant messages; sets conversationId; onRun closure forwards (plan, geos) to handleRunPlan"
+        handleRunPlan: "handleRunPlan(plan, selectedGeos?) — calls startRun({ planId, geos? }); multi-geo → setActiveBatch; single-geo → creates RunObserver; geos omitted when empty (server uses plan defaults)"
+    history:
+      file: "apps/experience-qa/client/src/pages/HistoryPage.jsx"
+      purpose: "Paginated, filterable run history. Inline expand shows RunSummary. Re-run starts a new run and navigates to /."
+      key_state:
+        runs: "array — current page of runs"
+        filters: "{ planId, geo, status } — planId filter is server-side; geo/status are client-side"
+        hasMore: "boolean — controls Load More button"
+      key_functions:
+        fetchRuns: "fetchRuns(filters, offset) — calls listRuns with planId param"
+        handleRerun: "handleRerun(run) — calls startRun({ planId }) then navigate('/')"
+        visibleRuns: "derived — runs filtered by filters.geo and filters.status client-side"
+    settings:
+      file: "apps/experience-qa/client/src/pages/SettingsPage.jsx"
+      purpose: "Grouped collapsible settings form. Loads on mount; renders DEFAULT_SETTINGS in read-only mode when backend is unreachable. Saves full settings object on Save, re-fetches on Reset."
+      key_functions:
+        applyPatch: "applyPatch(patch) — deepMerge into settings state; supports nested objects"
+        handleSave: "handleSave() — calls updateSettings(settings); shows 'Saved!' flash for 2000ms"
+        deepMerge: "deepMerge(base, patch) — one-level deep merge; nested objects shallow-merged"
+      key_derived:
+        formDisabled: "saving || (!settings && !!error) — true when backend unreachable; disables all inputs + Save/Reset"
+        display: "settings ?? DEFAULT_SETTINGS — always renders something even on load failure"
+      model_options: "claude-sonnet-4-6 | claude-opus-4-6 | claude-haiku-4-5-20251001"
+    run_detail:
+      file: "apps/experience-qa/client/src/pages/RunDetailPage.jsx"
+      purpose: "Dedicated run detail view. Fetches run by :id param, renders sticky header + RunSummary."
+      key_functions:
+        load: "useEffect on id — calls getRun(id); sets notFound=true on 404 or missing data.run"
+
+  components:
+    layout:
+      sidebar:
+        file: "apps/experience-qa/client/src/components/Sidebar.jsx"
+        purpose: "Left-rail navigation: app title, New Chat button, scrollable conversation list, bottom nav links."
+        key_functions:
+          handleNewChat: "clears sessionStorage 'xqa_conversation_id', navigates to /"
+          handleOpenConv: "sets sessionStorage + navigates to /?c={conv.id}"
+        sync_mechanism: "Listens to 'storage' and 'focus' window events to keep activeId in sync with ChatPage"
+      error_boundary:
+        file: "apps/experience-qa/client/src/components/ErrorBoundary.jsx"
+        purpose: "Class component route-level error boundary. No Spectrum dependency by design. Renders recovery card with 'Try again' button."
+      toast:
+        file: "apps/experience-qa/client/src/components/Toast.jsx"
+        purpose: "Thin wrapper over @react-spectrum/toast. Exports ToastContainer (used in App.jsx) and toast.{success,error,info} helpers."
+        key_functions:
+          "toast.success": "ToastQueue.positive(msg, { timeout: 3000 })"
+          "toast.error": "ToastQueue.negative(msg, { timeout: 5000 })"
+          "toast.info": "ToastQueue.info(msg, { timeout: 3000 })"
+
+    chat:
+      message_list:
+        file: "apps/experience-qa/client/src/components/Chat/MessageList.jsx"
+        purpose: "Scrollable message feed. Renders user bubbles, assistant bubbles, error bubbles, PlanCard for plan responses, and RunProgressPlaceholder while a run is active."
+        props: "{ messages, isLoading, activeRun, runSteps }"
+        key_behaviors:
+          - "Auto-scrolls to anchor div on messages/isLoading/runSteps change"
+          - "type='plan' messages render PlanCard full-width; type='error' renders red bubble"
+          - "RunProgressPlaceholder shows when runSteps.length > 0 OR activeRun is set"
+      message_input:
+        file: "apps/experience-qa/client/src/components/Chat/MessageInput.jsx"
+        purpose: "Auto-growing textarea (max 5 lines). Enter submits; Shift+Enter newline. Optional URL toggle reveals secondary input."
+        props: "{ onSend: (text, url?) => void, disabled: boolean }"
+        key_behaviors:
+          - "URL field NOT reset on submit — users often test multiple URLs same session"
+          - "submit() calls onSend(text, trimmedUrl || undefined)"
+      plan_card:
+        file: "apps/experience-qa/client/src/components/Chat/PlanCard.jsx"
+        purpose: "Inline plan display with collapsible steps, per-step inline edit (persisted via updatePlan()), toggleable geo chips, and Run Plan button."
+        props: "{ plan: { id, url, title, steps, geos, createdAt }, onRun: (plan, selectedGeos: string[]) => void }"
+        key_behaviors:
+          - "handleStepSave — calls updatePlan(planId, { steps: updatedSteps }); updates localPlan optimistically on error too"
+          - "localPlan synced from prop only when plan.id changes (avoids stale re-render)"
+          - "selectedGeos state (string[]) — initialised from localPlan.geos; resets when plan.id changes"
+          - "Geo chips are toggleable <button aria-pressed> elements — selected=blue, deselected=gray strikethrough"
+          - "handleRun calls onRun(localPlan, selectedGeos) — always passes selected geos to parent"
+          - "Run Plan button disabled when onRun is not a function OR selectedGeos.length===0 (and plan has geos)"
+
+    run:
+      run_progress:
+        file: "apps/experience-qa/client/src/components/Run/RunProgress.jsx"
+        purpose: "Live vertical timeline of step results. Auto-scrolls to running step. Summary bar shows total/passed/failed/elapsed."
+        props: "{ steps: StepResultShape[], run: object|null }"
+        key_behaviors:
+          - "Pulses running dot with xqa-rp-pulse animation"
+          - "elapsedSince(run.startedAt) updates on re-render (not on a timer)"
+          - "isLive = !run || run.status not in terminal set"
+      run_summary:
+        file: "apps/experience-qa/client/src/components/Run/RunSummary.jsx"
+        purpose: "Final report card: pass-rate bar (green ≥90%, amber ≥60%, red otherwise), step list, Re-run button."
+        props: "{ run: { id, planId, status, geo, startedAt, completedAt, stepResults, passCount, failCount } }"
+        key_behaviors:
+          - "handleRerun — calls startRun({ planId }) then navigate('/')"
+          - "Pass rate computed as Math.round((passCount / (passCount+failCount)) * 100)"
+      step_result:
+        file: "apps/experience-qa/client/src/components/Run/StepResult.jsx"
+        purpose: "Expandable step row with pass/fail badge, error callout, and screenshot thumbnail with lightbox."
+        props: "{ step: { stepId, description, status, startedAt, completedAt, error?, screenshotUrl? }, index: number }"
+        key_behaviors:
+          - "Lightbox closes on Escape key via window keydown listener"
+          - "Screenshot thumbnail click opens lightbox; image click inside lightbox does NOT close (stopPropagation)"
+      batch_progress:
+        file: "apps/experience-qa/client/src/components/Run/BatchProgress.jsx"
+        purpose: "Multi-geo tabbed progress view. One RunProgress per geo tab. Each geo polled independently every 4s. Cancel All button cancels all active geos."
+        props: "{ geos: string[], runIds: string[], batchId?: string }"
+        key_behaviors:
+          - "Polling stops for a geo when its run reaches a terminal status"
+          - "Auto-selects first running geo tab when geoData changes"
+          - "Cancel All — calls cancelRun(runId) for each active geo via Promise.all; re-fetches all after"
+          - "POLL_INTERVAL_MS = 4000"
+
+# ─── PATTERNS ─────────────────────────────────────────────────────────────────
+
+patterns:
+  api_call: |
+    Standard async pattern in every component:
+    1. Set loading=true, clear error
+    2. await api function from lib/api.js
+    3. Destructure response (e.g. data?.runs ?? [])
+    4. Set state with results
+    5. In catch: setError(err.message ?? 'Fallback message')
+    6. In finally: setLoading(false)
+    Always use a `cancelled` boolean + early return in useEffect async loads to
+    prevent state updates on unmounted components.
+
+  run_polling: |
+    Single-geo polling via RunObserver:
+    1. Call startRun({ planId }) — returns { batchId, runIds, geos }
+    2. const runId = runIds[0] ?? result?.id
+    3. new RunObserver(runId, { onStep, onComplete, onError }).start()
+    4. onStep appends to runSteps array
+    5. onComplete sets activeRun, observer auto-stops
+
+    Multi-geo polling via BatchProgress:
+    1. setActiveBatch({ batchId, geos, runIds })
+    2. BatchProgress renders one tab per geo
+    3. Each geo polls getRun(runIds[i]) independently on 4s interval
+    4. Polls stop per-geo when that run reaches a terminal status
+
+  spectrum_adoption: |
+    Spectrum is mounted via Provider in main.jsx (defaultTheme, colorScheme="light").
+    ONLY Toast.jsx uses Spectrum components (@react-spectrum/toast).
+    ALL other components use plain HTML elements with inline CSS objects.
+    ErrorBoundary intentionally avoids Spectrum (it catches render errors
+    that could originate from Spectrum itself).
+
+  routing: |
+    React.lazy code-split pages in App.jsx:
+    - All pages wrapped in <ErrorBoundary> inside <Suspense>
+    - Fallback: plain div with "Loading..." text (no Spectrum)
+    - Routes: / | /history | /settings | /runs/:id
+    - No nested routes; all are siblings under one <Routes>
+
+  inline_css: |
+    Every component defines a const s = {} or const styles = {} object at module scope.
+    Style objects are merged inline: style={{ ...s.base, ...(condition ? s.variant : {}) }}
+    Keyframes are injected once via document.createElement('style') guarded by
+    document.getElementById(STYLE_ID) — see MessageList, RunProgress, StepResult, BatchProgress.
+
+  session_storage_conversation: |
+    ChatPage reads/writes sessionStorage key 'xqa_conversation_id' (SESSION_KEY).
+    On mount ChatPage also reads ?c= URL param via useSearchParams — if present, seeds
+    conversationId + sessionStorage, then clears param via setSearchParams({}, { replace: true }).
+    Empty dep array on that effect is intentional (fires once only); eslint-disable comment required.
+    Sidebar uses the same key to highlight the active conversation item.
+    Sidebar navigates to /?c={conv.id} on conversation click; ChatPage consumes the param.
+    Sidebar syncs via 'xqa:conversation-changed' custom event + 'storage' + 'focus' window events.
+    New Chat: sessionStorage.removeItem(SESSION_KEY) + navigate('/').
+
+# ─── DATA SHAPES ──────────────────────────────────────────────────────────────
+# Sourced from qa-server expertise.yaml contracts.
+
+data_shapes:
+  Message:
+    description: "Local UI message object appended to ChatPage messages array"
+    fields:
+      - "role (string): 'user' | 'assistant'"
+      - "content (string): display text"
+      - "type (string|undefined): 'plan' | 'error' — triggers special rendering in MessageList"
+      - "plan (object|undefined): TestPlan object when type='plan'"
+      - "onRun (Function|undefined): callback forwarded to PlanCard"
+
+  TestPlan:
+    description: "From GET /api/plans or POST /api/chat response"
+    fields:
+      - "_id / id (string): UUID"
+      - "name / title (string): plan display name"
+      - "url / urlBase (string): base URL"
+      - "geos (string[]): e.g. ['MX', 'BR']"
+      - "steps (PlanStep[]): ordered step definitions"
+      - "createdAt (ISO 8601)"
+
+  PlanStep:
+    description: "Element of TestPlan.steps — used in PlanCard StepRow"
+    fields:
+      - "id (string): step UUID"
+      - "description (string): plain English action — displayed and editable in PlanCard"
+      - "type (string): navigate|extract_price|check_cta|check_language|screenshot|click — shown as badge"
+      - "expectedResult (string|undefined): shown below description"
+
+  TestRun:
+    description: "From GET /api/runs/:id — used in RunSummary, RunProgress, BatchProgress"
+    fields:
+      - "id / _id (string): UUID"
+      - "planId (string): foreign key"
+      - "status (string): queued|running|completed|failed|cancelled|error|partial"
+      - "geo (string): single-geo code e.g. 'MX'"
+      - "startedAt / completedAt (ISO 8601 | null)"
+      - "stepResults (StepResult[]): array of step result objects"
+      - "passCount (number): summary pass count"
+      - "failCount (number): summary fail count"
+      - "pctComplete (number): 0–100"
+      - "planName (string|undefined): denormalized plan name used in RunDetailPage header"
+
+  StepResult:
+    description: "Element of TestRun.stepResults — used in RunProgress (StepRow) and StepResult component"
+    fields:
+      - "stepId / id (string): UUID"
+      - "description (string): step action text"
+      - "status (string): pending|running|pass|fail|error|skipped"
+      - "startedAt / completedAt (ISO 8601 | undefined)"
+      - "error (string|undefined): error message for failed steps"
+      - "screenshotUrl (string|undefined): presigned URL served by storage layer"
+
+  StartRunResponse:
+    description: "POST /api/runs response — from startRun() in api.js"
+    fields:
+      - "batchId (string): groups all geo runs from this POST"
+      - "runIds (string[]): one run ID per geo"
+      - "geos (string[]): geo codes matching runIds by index"
+
+  ConversationPreview:
+    description: "Element of GET /api/chat response — used in Sidebar"
+    fields:
+      - "id (string): conversation UUID"
+      - "createdAt / updatedAt / lastMessageAt (ISO 8601)"
+      - "preview (string): first ~100 chars of last message"
+
+  Settings:
+    description: "From GET/PUT /api/settings — bound to SettingsPage form"
+    fields:
+      - "models.planGeneration (string): plan gen model"
+      - "models.visionValidation (string): vision model"
+      - "models.languageDetection (string): language detection model"
+      - "models.chatRefinement (string): chat model"
+      - "priceMismatchThresholdPct (number): 0–100"
+      - "defaultGeos (string[]): e.g. ['MX','BR','CO','PE']"
+      - "jira.baseUrl / jira.projectKey / jira.defaultPriority"
+      - "slack.webhookUrl / slack.notifyOnFailure"
+
+# ─── INTEGRATION POINTS ───────────────────────────────────────────────────────
+
+integration_points:
+  server:
+    description: "api.js function to server endpoint mapping"
+    endpoints:
+      listPlans:         "GET  /api/plans"
+      createPlan:        "POST /api/plans"
+      getPlan:           "GET  /api/plans/:id"
+      updatePlan:        "PUT  /api/plans/:id"
+      deletePlan:        "DELETE /api/plans/:id"
+      listRuns:          "GET  /api/runs"
+      startRun:          "POST /api/runs"
+      getRun:            "GET  /api/runs/:id"
+      cancelRun:         "DELETE /api/runs/:id"
+      getGeoStatus:      "GET  /api/runs/:id/geo-status"
+      listSchedules:     "GET  /api/schedules"
+      createSchedule:    "POST /api/schedules"
+      getSchedule:       "GET  /api/schedules/:id"
+      updateSchedule:    "PUT  /api/schedules/:id"
+      deleteSchedule:    "DELETE /api/schedules/:id"
+      getSettings:       "GET  /api/settings"
+      updateSettings:    "PUT  /api/settings"
+      sendMessage:       "POST /api/chat"
+      listConversations: "GET  /api/chat"
+      getMessages:       "GET  /api/chat/messages?conversationId="
+
+  spectrum:
+    how: "Provider wraps entire app in main.jsx. Only Toast.jsx consumes Spectrum components."
+    key_contract: "ToastContainer must be rendered inside Provider. toast.success/error/info call ToastQueue directly."
+
+  vite:
+    how: "VITE_API_URL env var sets the base URL for all API calls. In dev, Vite proxy handles /api/* routing."
+    key_contract: "BASE_URL strips trailing slash. All paths in api.js start with /api/."
+
+# ─── GOTCHAS ──────────────────────────────────────────────────────────────────
+
+gotchas:
+  - "No Redux: all state is local. Pages fetch their own data on mount. No shared API cache — two pages can show stale data simultaneously."
+  - "Inline CSS everywhere: adding hover states requires either JS state (hovered boolean) or the keyframe injection pattern. No CSS class targeting except xqa-sr-header hover rule in StepResult."
+  - "Spectrum partial adoption: only Toast uses Spectrum. Do NOT add Spectrum form components to existing pages without a deliberate migration plan — mixing inline CSS with Spectrum components is jarring."
+  - "conversationId is in sessionStorage, not React context — Sidebar reads it via window events, not via a shared store. If you add a third component that needs conversationId, add another storage event listener or refactor to context."
+  - "startRun returns 202 immediately — the run object is not complete in the response. Always poll via RunObserver or BatchProgress; never try to read run results from the startRun() response."
+  - "BatchProgress polling uses a setInterval inside setGeoData functional update to read current state without stale closure — do not refactor to a plain interval without preserving this pattern."
+  - "PlanCard localPlan only syncs from prop when plan.id changes — not on every render. If the server returns an updated plan with the same ID, localPlan will NOT update."
+  - "HistoryPage geo and status filters are client-side only; only planId is sent to the server. Large datasets may show stale geo filter options after Load More appends new runs."
+  - "Keyframe injection guards (document.getElementById(STYLE_ID)) prevent duplicate style tags on HMR reloads — always use this pattern when injecting CSS from a component."
+  - "deletePlan returns 409 if a run with status='running' references the planId — surface this as a user-facing error, not a generic catch."
+  - "PlanCard onRun now passes TWO arguments: (plan, selectedGeos). Any parent that passes an onRun callback must accept both — ChatPage handleSend closure was updated to forward (plan, geos) => handleRunPlan(plan, geos)."
+  - "SettingsPage renders DEFAULT_SETTINGS read-only when backend is unreachable (formDisabled=true). Do not conditionalize the form on settings !== null — the form always renders."
+  - "ChatPage ?c= useEffect has intentional empty dep array — adding searchParams to deps causes infinite loop because setSearchParams inside the effect triggers a re-render."
+
+# ─── BEST PRACTICES ───────────────────────────────────────────────────────────
+
+best_practices:
+  - "Use a cancelled boolean ref in useEffect async loads to prevent setState on unmounted components (pattern is used in all pages)."
+  - "Always destructure API response with null-safe defaults: data?.runs ?? [] — server may return null or omit the key on edge cases."
+  - "Append error messages as assistant messages in ChatPage rather than showing modal dialogs — keeps the chat feed the single source of truth."
+  - "Pass onRun as a stable closure captured inside the message object (see ChatPage handleSend) so MessageList → PlanCard doesn't need access to ChatPage state."
+  - "Keep Toast calls (toast.success / toast.error) for background actions (settings saved, re-run started). Reserve inline error state for form validation and data-load failures."
+  - "RunObserver instances should NOT be stored in React state — store in a ref or create inside a useCallback that only runs once. Storing in state triggers re-renders on observer mutation."
+  - "Prefer relativeTime() helpers over full date strings in list views (HistoryPage, Sidebar) — long ISO strings break compact layouts."
+  - "When adding a new page, wrap it in ErrorBoundary in App.jsx routes and use React.lazy + dynamic import."
+
+# ─── KEY FILE LOCATIONS ───────────────────────────────────────────────────────
+
+key_file_locations:
+  entry:
+    main:    "apps/experience-qa/client/src/main.jsx"
+    app:     "apps/experience-qa/client/src/App.jsx"
+
+  lib:
+    api:         "apps/experience-qa/client/src/lib/api.js"
+    runObserver: "apps/experience-qa/client/src/lib/runObserver.js"
+
+  pages:
+    chat:      "apps/experience-qa/client/src/pages/ChatPage.jsx"
+    history:   "apps/experience-qa/client/src/pages/HistoryPage.jsx"
+    settings:  "apps/experience-qa/client/src/pages/SettingsPage.jsx"
+    run_detail: "apps/experience-qa/client/src/pages/RunDetailPage.jsx"
+
+  components_layout:
+    sidebar:        "apps/experience-qa/client/src/components/Sidebar.jsx"
+    toast:          "apps/experience-qa/client/src/components/Toast.jsx"
+    error_boundary: "apps/experience-qa/client/src/components/ErrorBoundary.jsx"
+
+  components_chat:
+    message_list:  "apps/experience-qa/client/src/components/Chat/MessageList.jsx"
+    message_input: "apps/experience-qa/client/src/components/Chat/MessageInput.jsx"
+    plan_card:     "apps/experience-qa/client/src/components/Chat/PlanCard.jsx"
+
+  components_run:
+    run_progress:  "apps/experience-qa/client/src/components/Run/RunProgress.jsx"
+    run_summary:   "apps/experience-qa/client/src/components/Run/RunSummary.jsx"
+    step_result:   "apps/experience-qa/client/src/components/Run/StepResult.jsx"
+    batch_progress: "apps/experience-qa/client/src/components/Run/BatchProgress.jsx"
