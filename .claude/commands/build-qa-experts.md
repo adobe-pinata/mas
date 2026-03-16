@@ -1,14 +1,14 @@
 ---
 name: build-qa-experts
 allowed-tools: Task, TaskOutput, Bash, TodoWrite
-description: Generate all three QA domain expert sets (qa-server, qa-client, qa-integrations) from the codebase. Runs qa-server first (defines contracts), then qa-client and qa-integrations in parallel (both read qa-server output). Use when setting up the QA expert system for the first time or rebuilding all experts.
+description: Generate all three QA domain expert sets (qa-server, frontend, qa-integrations) from the codebase. Runs qa-server first (defines contracts), then frontend and qa-integrations in parallel (both read qa-server output). Use when setting up the QA expert system for the first time or rebuilding all experts.
 ---
 
 # Build QA Domain Experts
 
 Generates all three QA domain expert sets by exploiting the dependency graph:
 - `qa-server` first — it defines the API contracts and service patterns
-- `qa-client` + `qa-integrations` in parallel — both read qa-server's output, independent of each other
+- `frontend` + `qa-integrations` in parallel — both read qa-server's output, independent of each other
 
 **Plan reference:** `specs/qa-domain-experts-build.md`
 **Pattern reference:** `.claude/commands/experts/adw/` (canonical ADW expert)
@@ -108,17 +108,17 @@ Use TaskOutput to get `qa_server_result`. Confirm YAML valid before proceeding.
 
 ---
 
-### Step 2 — Generate qa-client + qa-integrations in parallel
+### Step 2 — Generate frontend + qa-integrations in parallel
 
 Both experts read qa-server's expertise.yaml as upstream context. They are independent of each other — spawn both simultaneously.
 
-**Task A — qa-client expert:**
+**Task A — frontend expert:**
 
 ```
 Task(
   subagent_type: "general-purpose",
   prompt: "
-    You are generating the qa-client domain expert for the Adobe Experience QA Platform.
+    You are generating the frontend domain expert for the Adobe Experience QA Platform.
 
     UPSTREAM CONTEXT — read this first (server API contracts the client consumes):
     - .claude/commands/experts/qa-server/expertise.yaml
@@ -156,7 +156,7 @@ Task(
 
     GENERATE these 5 files:
 
-    1. .claude/commands/experts/qa-client/expertise.yaml
+    1. .claude/commands/experts/frontend/expertise.yaml
        Sections required: overview, key_files (entry, api, pages, components by group),
        patterns (api_call, run_polling, spectrum_adoption, routing),
        data_shapes (sourced from qa-server expertise.yaml contracts),
@@ -165,20 +165,20 @@ Task(
        best_practices, key_file_locations.
        RULES: every file path must exist, every function verified via Grep. Max 1000 lines.
 
-    2. .claude/commands/experts/qa-client/plan.md
-       Variables: USER_REQUEST=$1, PRIOR_SPEC=$2, EXPERTISE_FILE=.claude/commands/experts/qa-client/expertise.yaml
+    2. .claude/commands/experts/frontend/plan.md
+       Variables: USER_REQUEST=$1, PRIOR_SPEC=$2, EXPERTISE_FILE=.claude/commands/experts/frontend/expertise.yaml
        If PRIOR_SPEC is set, read it first as upstream contract before planning.
        Delegates to /plan with USER_REQUEST.
 
-    3. .claude/commands/experts/qa-client/question.md
-    4. .claude/commands/experts/qa-client/self-improve.md
-    5. .claude/commands/experts/qa-client/plan_build_improve.md
+    3. .claude/commands/experts/frontend/question.md
+    4. .claude/commands/experts/frontend/self-improve.md
+    5. .claude/commands/experts/frontend/plan_build_improve.md
 
     VALIDATE after writing:
-    - python3 -c \"import yaml; yaml.safe_load(open('.claude/commands/experts/qa-client/expertise.yaml')); print('YAML valid')\"
-    - wc -l .claude/commands/experts/qa-client/expertise.yaml
+    - python3 -c \"import yaml; yaml.safe_load(open('.claude/commands/experts/frontend/expertise.yaml')); print('YAML valid')\"
+    - wc -l .claude/commands/experts/frontend/expertise.yaml
 
-    Return: 'qa-client expert complete. Files: [list]. Line count: N. YAML: valid/invalid.'
+    Return: 'frontend expert complete. Files: [list]. Line count: N. YAML: valid/invalid.'
   "
 )
 ```
@@ -262,21 +262,21 @@ Run these commands directly (not via Task agent):
 ```bash
 # Confirm all 15 files exist
 find .claude/commands/experts/qa-server \
-     .claude/commands/experts/qa-client \
+     .claude/commands/experts/frontend \
      .claude/commands/experts/qa-integrations \
      -type f | sort
 
 # Validate YAML syntax for all three
 python3 -c "
 import yaml
-for d in ['qa-server', 'qa-client', 'qa-integrations']:
+for d in ['qa-server', 'frontend', 'qa-integrations']:
     yaml.safe_load(open(f'.claude/commands/experts/{d}/expertise.yaml'))
     print(f'{d}: OK')
 "
 
 # Line counts (all must be ≤ 1000)
 wc -l .claude/commands/experts/qa-server/expertise.yaml \
-       .claude/commands/experts/qa-client/expertise.yaml \
+       .claude/commands/experts/frontend/expertise.yaml \
        .claude/commands/experts/qa-integrations/expertise.yaml
 ```
 
@@ -288,9 +288,9 @@ If any validation fails: fix the offending file inline (do not re-spawn the full
 
 ```bash
 git add .claude/commands/experts/qa-server \
-        .claude/commands/experts/qa-client \
+        .claude/commands/experts/frontend \
         .claude/commands/experts/qa-integrations
-git commit -m "feat: add qa-server, qa-client, qa-integrations domain experts"
+git commit -m "feat: add qa-server, frontend, qa-integrations domain experts"
 ```
 
 ---
@@ -302,18 +302,18 @@ QA Domain Experts Build Complete
 
 Experts created:
 - /experts:qa-server:{plan,question,self-improve,plan_build_improve}
-- /experts:qa-client:{plan,question,self-improve,plan_build_improve}
+- /experts:frontend:{plan,question,self-improve,plan_build_improve}
 - /experts:qa-integrations:{plan,question,self-improve,plan_build_improve}
 
 Line counts:
 - qa-server/expertise.yaml:  N lines
-- qa-client/expertise.yaml:  N lines
+- frontend/expertise.yaml:  N lines
 - qa-integrations/expertise.yaml: N lines
 
 YAML validation: all valid
 
 Next steps:
 1. Smoke-test: /experts:qa-server:question "how does runner.js dispatch step types?"
-2. Try the pipe: /experts:qa-server:plan "your feature" -> /experts:qa-client:plan "your feature" specs/qa-server-plan.md
+2. Try the pipe: /experts:qa-server:plan "your feature" -> /experts:frontend:plan "your feature" specs/qa-server-plan.md
 3. After any codebase changes: run /experts:qa-{domain}:self-improve true
 ```

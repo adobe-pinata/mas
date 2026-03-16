@@ -416,21 +416,21 @@ The `experts/` subdirectory contains domain expert command sets. Each domain has
 
 ---
 
-### QA Client Experts (`/experts:qa-client:*`)
+### QA Client Experts (`/experts:frontend:*`)
 
-#### /experts:qa-client:plan
+#### /experts:frontend:plan
 **Purpose:** Create implementation plans for QA client features (chat UI, run progress, history, settings, api.js, routing) with domain expertise loaded.
-**Usage:** `/experts:qa-client:plan "[user_request]" [prior_spec_path]`
+**Usage:** `/experts:frontend:plan "[user_request]" [prior_spec_path]`
 **Key behavior:**
 1. If `prior_spec_path` is provided, reads it first as the upstream server API contract.
-2. Reads the qa-client expertise file; focuses on inline CSS conventions, polling patterns, no-Redux rule, Spectrum partial adoption, and api.js signatures.
+2. Reads the frontend expertise file; focuses on inline CSS conventions, polling patterns, no-Redux rule, Spectrum partial adoption, and api.js signatures.
 3. Delegates to `/plan`.
 
 ---
 
-#### /experts:qa-client:question
+#### /experts:frontend:question
 **Purpose:** Answer read-only questions about QA client architecture, React patterns, api.js contracts, routing, and Spectrum adoption.
-**Usage:** `/experts:qa-client:question "[question]"`
+**Usage:** `/experts:frontend:question "[question]"`
 **Key behavior:**
 1. Reads expertise file, validates against real client source files.
 2. Returns direct answer with file:line references, conceptual explanations, and diagrams.
@@ -438,9 +438,9 @@ The `experts/` subdirectory contains domain expert command sets. Each domain has
 
 ---
 
-#### /experts:qa-client:self-improve
-**Purpose:** Validate and update the qa-client expertise file against the actual client codebase.
-**Usage:** `/experts:qa-client:self-improve [true|false] [focus_area]`
+#### /experts:frontend:self-improve
+**Purpose:** Validate and update the frontend expertise file against the actual client codebase.
+**Usage:** `/experts:frontend:self-improve [true|false] [focus_area]`
 **Key behavior:**
 1. Optionally checks `git diff apps/experience-qa/client/` for recent changes.
 2. Verifies all documented files, function names, props, sessionStorage key usage, and api.js exports via Grep.
@@ -448,10 +448,10 @@ The `experts/` subdirectory contains domain expert command sets. Each domain has
 
 ---
 
-#### /experts:qa-client:plan_build_improve
-**Purpose:** End-to-end qa-client implementation — plan, build, sync expertise.
-**Usage:** `/experts:qa-client:plan_build_improve "[implementation_request]" [human_in_the_loop]`
-**Key behavior:** Same three-step chain — plan → implement → self-improve — using the qa-client expert at each step.
+#### /experts:frontend:plan_build_improve
+**Purpose:** End-to-end frontend implementation — plan, build, sync expertise.
+**Usage:** `/experts:frontend:plan_build_improve "[implementation_request]" [human_in_the_loop]`
+**Key behavior:** Same three-step chain — plan → implement → self-improve — using the frontend expert at each step.
 
 ---
 
@@ -512,10 +512,10 @@ The `experts/` subdirectory contains domain expert command sets. Each domain has
 ---
 
 #### /build-qa-experts
-**Purpose:** Generate all three QA domain expert sets (qa-server, qa-client, qa-integrations) from the codebase in one orchestrated run.
+**Purpose:** Generate all three QA domain expert sets (qa-server, frontend, qa-integrations) from the codebase in one orchestrated run.
 **Usage:** `/build-qa-experts`
 **Key behavior:**
 1. Step 1 (sequential): Spawns a Task agent to generate the qa-server expert (5 files) — must complete first as it defines the API contracts.
-2. Step 2 (parallel): Spawns two simultaneous Task agents — one for qa-client, one for qa-integrations — both reading qa-server's expertise.yaml as upstream context.
+2. Step 2 (parallel): Spawns two simultaneous Task agents — one for frontend, one for qa-integrations — both reading qa-server's expertise.yaml as upstream context.
 3. Step 3: Validates all 15 files exist, confirms YAML syntax valid for all three, checks line counts (all must be ≤ 1000).
 4. Step 4: Commits all three expert directories with `git commit`.

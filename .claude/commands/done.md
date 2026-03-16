@@ -43,7 +43,7 @@ Based on what WORK_DESCRIPTION touched, suggest which expert(s) to sync so exper
 | Changed | Suggest |
 |---------|---------|
 | Server actions, services, storage, runner | `/experts:qa-server:self-improve` |
-| Client pages, components, api.js | `/experts:qa-client:self-improve` |
+| Client pages, components, api.js | `/experts:frontend:self-improve` |
 | Jira, Slack, WCS, AOS, webhooks | `/experts:qa-integrations:self-improve` |
 
 Print the suggestion — do not run it automatically.

@@ -1,5 +1,5 @@
 ---
-name: qa-client-question
+name: frontend-question
 allowed-tools: Read, Bash, TodoWrite, Grep, Glob
 description: Answer questions about QA client architecture, React component patterns, api.js contracts, run polling, routing, Spectrum adoption, and inline CSS conventions — without making code changes. Use when asking how the client works, where things live, why a pattern exists, or what a data shape looks like.
 argument-hint: [question]
@@ -12,7 +12,7 @@ Answer the user's question by analyzing the QA client implementation. This is a 
 ## Variables
 
 USER_QUESTION: $1
-EXPERTISE_PATH: .claude/commands/experts/qa-client/expertise.yaml
+EXPERTISE_PATH: .claude/commands/experts/frontend/expertise.yaml
 
 ## Instructions
 
@@ -24,7 +24,7 @@ EXPERTISE_PATH: .claude/commands/experts/qa-client/expertise.yaml
 
 ## Workflow
 
-1. Read EXPERTISE_PATH to understand qa-client architecture, key files, and patterns
+1. Read EXPERTISE_PATH to understand frontend architecture, key files, and patterns
 2. Identify which parts of the expertise are relevant to USER_QUESTION
 3. Read the relevant source files to validate and enrich the answer
 4. Respond per the Report format below

@@ -1,13 +1,13 @@
 ---
-name: qa-client-plan-build-improve
+name: frontend-plan-build-improve
 allowed-tools: Task, TaskOutput, TodoWrite
-description: End-to-end qa-client implementation workflow. Chains expertise-informed planning → code build → expertise self-improvement. Use for complete feature development in client pages, components, api.js extensions, or routing changes.
+description: End-to-end frontend implementation workflow. Chains expertise-informed planning → code build → expertise self-improvement. Use for complete feature development in client pages, components, api.js extensions, or routing changes.
 argument-hint: [implementation_request] [human_in_the_loop (bool)]
 ---
 
 # Purpose
 
-Orchestrates a complete qa-client implementation cycle by chaining three specialized commands: expertise-informed planning, building from the plan, and self-improving the expertise based on changes made.
+Orchestrates a complete frontend implementation cycle by chaining three specialized commands: expertise-informed planning, building from the plan, and self-improving the expertise based on changes made.
 
 ## Variables
 
@@ -30,7 +30,7 @@ Spawn a subagent to run the planning command:
 ```
 Task(
   subagent_type: "general-purpose",
-  prompt: "Run SlashCommand('/experts:qa-client:plan [USER_PROMPT]'). Return the path to the generated plan file."
+  prompt: "Run SlashCommand('/experts:frontend:plan [USER_PROMPT]'). Return the path to the generated plan file."
 )
 ```
 
@@ -60,7 +60,7 @@ Spawn a subagent to run the self-improve command:
 ```
 Task(
   subagent_type: "general-purpose",
-  prompt: "Run SlashCommand('/experts:qa-client:self-improve true'). Return the self-improvement report."
+  prompt: "Run SlashCommand('/experts:frontend:self-improve true'). Return the self-improvement report."
 )
 ```
 
@@ -86,4 +86,4 @@ Compile the final report from all three steps.
 - [self_improve_report summary]
 
 ### Final Status
-qa-client implementation workflow complete.
+frontend implementation workflow complete.

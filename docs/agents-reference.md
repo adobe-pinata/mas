@@ -37,6 +37,32 @@ Agents receive only the context passed to them at invocation time, which keeps t
 
 ---
 
+### agent-frontend
+
+**Purpose:** Builds intentional Adobe Spectrum S2 UI code by combining design philosophy, live component documentation lookup (MCP), and code generation in a single agent context.
+
+**Tools available:** `Read`, `Write`, `Edit`, `Grep`, `Glob`, `Bash`, `mcp__react-spectrum-s2__list_all_components`, `mcp__react-spectrum-s2__get_component`, `mcp__react-spectrum-s2__search_components`, `mcp__react-aria__list_react_aria_pages`, `mcp__react-aria__get_react_aria_page_info`, `mcp__react-aria__get_react_aria_page`
+
+**Model:** sonnet
+
+**When dispatched:** When implementing UI features, building pages or components, or refactoring existing UI to use Spectrum S2 — any task that requires both knowing the right S2 component and writing the code. Not for quick doc lookups (use `adobe-spectrum` for that).
+
+**Key behavior:**
+- First action is always reading `.claude/skills/frontend-design/SKILL.md` to load the design philosophy that governs every decision.
+- Chooses an explicit design direction (clean & minimal, expressive & vibrant, information-dense, or editorial & spatial) based on the UI's purpose — never defaults to generic.
+- Looks up every S2 component via MCP tools before writing code — confirms props, import paths, and usage patterns rather than guessing.
+- Prefers S2 styled components; drops to React Aria headless primitives only when S2 doesn't cover the need.
+- Self-checks all output before returning: no raw HTML where S2 equivalents exist, no pixel values (uses size tokens), no default-everything, no hardcoded hex colors, no mixed Spectrum 1/S2 imports.
+- Returns working code with correct `@react-spectrum/s2` imports, a brief design rationale, and flags for any elements without S2 equivalents.
+
+**Relationship to other Spectrum tools:**
+- `adobe-spectrum` agent — lookup only, no code writing. Use for "what props does X have?" questions.
+- `frontend-design` skill — design philosophy loaded into main context. `agent-frontend` reads this skill as its first step.
+- `/spectrum-check` command — post-implementation audit. Can be run after `agent-frontend` finishes.
+- `/scaffold` command — new app boilerplate. Use before `agent-frontend` for greenfield apps.
+
+---
+
 ### agent-browser
 
 **Purpose:** Automates multi-step browser flows via the `agent-browser` CLI and returns a structured validation report while isolating context from the parent conversation.
@@ -318,6 +344,7 @@ These agents write or modify code files.
 
 | Agent | Model | Primary Function |
 |-------|-------|-----------------|
+| `agent-frontend` | sonnet | Builds intentional Spectrum S2 UI — design + MCP lookup + code generation |
 | `build-agent` | sonnet | Implements a single file based on a detailed spec |
 | `batch-fix` | sonnet | Systematically applies all fixes from a batch-review report |
 | `csv-edit-agent` | opus | Modifies or reports on CSV files with continuous validation |

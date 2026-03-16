@@ -26,6 +26,9 @@ Then read the relevant `SKILL.md` first before any other files in that skill.
 - `fluffyjaws` — query FluffyJaws internal AI (`fj chat`)
 - `aio` — Adobe I/O App Builder CLI operations
 - `meta-skill` — create new skills
+- `frontend-design` — produce intentional, characterful Adobe Spectrum S2 UIs
+- `react-spectrum-s2` — look up React Spectrum 2 component documentation
+- `react-aria` — look up React Aria component documentation
 
 ## Step 4: Report
 

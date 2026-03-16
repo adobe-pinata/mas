@@ -1,27 +1,27 @@
 ---
-name: qa-client-self-improve
+name: frontend-self-improve
 allowed-tools: Read, Grep, Glob, Bash, Edit, Write, TodoWrite
-description: Validate and update the qa-client expertise file against the actual codebase. Detects outdated file paths, missing functions, changed component props, new pages, and stale patterns. Run after any client page, component, or lib changes to keep expertise accurate.
+description: Validate and update the frontend expertise file against the actual codebase. Detects outdated file paths, missing functions, changed component props, new pages, and stale patterns. Run after any client page, component, or lib changes to keep expertise accurate.
 argument-hint: [check_git_diff (true/false)] [focus_area (optional)]
 ---
 
 # Purpose
 
-Maintain the qa-client expertise file's accuracy by comparing it against the actual codebase. The expertise file is the **mental model** for all qa-client tasks — it must reflect reality, not aspirations.
+Maintain the frontend expertise file's accuracy by comparing it against the actual codebase. The expertise file is the **mental model** for all frontend tasks — it must reflect reality, not aspirations.
 
 ## Variables
 
 CHECK_GIT_DIFF: $1    # default: false
 FOCUS_AREA: $2        # optional — specific area to prioritize (e.g. "components", "api", "pages")
-EXPERTISE_FILE: .claude/commands/experts/qa-client/expertise.yaml
+EXPERTISE_FILE: .claude/commands/experts/frontend/expertise.yaml
 MAX_LINES: 1000
 
 ## Instructions
 
-- This is a self-improvement workflow to keep qa-client expertise synchronized with the actual codebase
+- This is a self-improvement workflow to keep frontend expertise synchronized with the actual codebase
 - Think of the expertise file as your **mental model** and memory reference for all client-related functionality
 - Always validate expertise against real implementation, not assumptions
-- Focus exclusively on qa-client: pages, components, lib/api.js, lib/runObserver.js, main.jsx, App.jsx
+- Focus exclusively on frontend: pages, components, lib/api.js, lib/runObserver.js, main.jsx, App.jsx
 - If FOCUS_AREA is provided, prioritize validation of that specific area
 - Maintain YAML structure and enforce the 1000-line limit
 - Write as a principal engineer — clearly and concisely for future engineers
@@ -64,12 +64,12 @@ MAX_LINES: 1000
    - Maintain YAML structure and formatting
 
 6. **Enforce Line Limit**
-   - Run: `wc -l .claude/commands/experts/qa-client/expertise.yaml`
+   - Run: `wc -l .claude/commands/experts/frontend/expertise.yaml`
    - If count > MAX_LINES: trim least-critical sections (verbose prose, redundant examples)
    - Repeat until count <= MAX_LINES
 
 7. **Validate YAML**
-   - Run: `python3 -c "import yaml; yaml.safe_load(open('.claude/commands/experts/qa-client/expertise.yaml')); print('YAML valid')"`
+   - Run: `python3 -c "import yaml; yaml.safe_load(open('.claude/commands/experts/frontend/expertise.yaml')); print('YAML valid')"`
    - Fix any syntax errors before reporting
 
 ## Report

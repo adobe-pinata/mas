@@ -23,23 +23,23 @@ description: Prime context for Adobe Experience QA Platform (Agentic Catch). Loa
 | Task touches | Use expert(s) | Pipe pattern |
 |---|---|---|
 | Server only (actions, services, storage, browser, runner) | `qa-server` | `/experts:qa-server:plan "request"` |
-| Client only (React, Spectrum, UI components) | `qa-client` | `/experts:qa-client:plan "request"` |
+| Client only (React, Spectrum, UI components) | `frontend` | `/experts:frontend:plan "request"` |
 | Integrations only (AEM, Jira, Slack, WCS, AOS) | `qa-integrations` | `/experts:qa-integrations:plan "request"` |
-| Server + Client (API + UI — most features) | `qa-server` → `qa-client` | server plan first, pass it as `$2` to client plan |
+| Server + Client (API + UI — most features) | `qa-server` → `frontend` | server plan first, pass it as `$2` to client plan |
 | Server + Integrations (new connector, webhook) | `qa-server` → `qa-integrations` | server plan first, pass it as `$2` to integrations plan |
 | All three (new geo, new run type, full feature) | all three in order | server → client → integrations, each reading prior spec |
 
 **Expert pipe pattern:**
 ```
 /experts:qa-server:plan "add Peru geo"                                     → specs/qa-server-plan.md
-/experts:qa-client:plan "add Peru geo" specs/qa-server-plan.md             → specs/qa-client-plan.md
+/experts:frontend:plan "add Peru geo" specs/qa-server-plan.md             → specs/frontend-plan.md
 /experts:qa-integrations:plan "add Peru geo" specs/qa-server-plan.md       → specs/qa-integrations-plan.md
 /implement specs/qa-integrations-plan.md
 ```
 
 **Answering a question without building:**
 - Server architecture/patterns: `/experts:qa-server:question "your question"`
-- Client architecture/patterns: `/experts:qa-client:question "your question"`
+- Client architecture/patterns: `/experts:frontend:question "your question"`
 - Integration patterns: `/experts:qa-integrations:question "your question"`
 
 **Auditing or reviewing the spec:**

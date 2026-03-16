@@ -86,7 +86,7 @@ Each domain also has four slash commands that consume the expertise file in diff
 
 ---
 
-### qa-client
+### frontend
 
 **Scope:** React 18 SPA (Vite) frontend for the QA platform. Covers the chat-to-plan UI, multi-geo run launching and polling, run history, settings management, all `lib/api.js` fetch wrappers, the `RunObserver` polling class, component patterns (inline CSS, keyframe injection, Spectrum partial adoption), and routing.
 
@@ -104,13 +104,13 @@ Each domain also has four slash commands that consume the expertise file in diff
 
 **Commands:**
 
-- `/experts:qa-client:plan` — Accepts an optional `[prior_spec_path]`. If set, reads the upstream spec first (typically from a qa-server plan) to extract server API shapes that the client must consume. Then loads the expertise file, reads the relevant source files, and delegates to `/plan`. Ensures plans respect inline CSS conventions, polling patterns, Spectrum adoption rules, and no-Redux constraint.
+- `/experts:frontend:plan` — Accepts an optional `[prior_spec_path]`. If set, reads the upstream spec first (typically from a qa-server plan) to extract server API shapes that the client must consume. Then loads the expertise file, reads the relevant source files, and delegates to `/plan`. Ensures plans respect inline CSS conventions, polling patterns, Spectrum adoption rules, and no-Redux constraint.
 
-- `/experts:qa-client:question` — Read-only mode. Loads the expertise file, reads relevant source files, and answers questions about React component patterns, api.js contracts, run polling, routing, Spectrum adoption, and inline CSS. Returns a direct answer with file references and diagrams.
+- `/experts:frontend:question` — Read-only mode. Loads the expertise file, reads relevant source files, and answers questions about React component patterns, api.js contracts, run polling, routing, Spectrum adoption, and inline CSS. Returns a direct answer with file references and diagrams.
 
-- `/experts:qa-client:self-improve` — Validates the expertise file by reading all listed files and running Grep for all documented function names, prop shapes, and constants (including `xqa_conversation_id` session key, `TERMINAL_STATUSES` set membership, api.js exports). Fixes discrepancies, enforces 1000-line limit, and validates YAML syntax. Accepts `[check_git_diff]` and `[focus_area]` (e.g., `components`, `api`, `pages`).
+- `/experts:frontend:self-improve` — Validates the expertise file by reading all listed files and running Grep for all documented function names, prop shapes, and constants (including `xqa_conversation_id` session key, `TERMINAL_STATUSES` set membership, api.js exports). Fixes discrepancies, enforces 1000-line limit, and validates YAML syntax. Accepts `[check_git_diff]` and `[focus_area]` (e.g., `components`, `api`, `pages`).
 
-- `/experts:qa-client:plan_build_improve` — End-to-end workflow. Chains `/experts:qa-client:plan` → `/implement` → `/experts:qa-client:self-improve true` as sequential subagents. Returns a combined report of all three steps.
+- `/experts:frontend:plan_build_improve` — End-to-end workflow. Chains `/experts:frontend:plan` → `/implement` → `/experts:frontend:self-improve true` as sequential subagents. Returns a combined report of all three steps.
 
 ---
 
@@ -169,7 +169,7 @@ When a `plan` command runs, it follows a two-step Higher Order Prompt (HOP) patt
 
 2. **Delegation step** — The agent calls `/plan` with the user request as the argument. Because the expertise and source files are now in context, the planning agent reasons with accurate knowledge of file paths, function signatures, patterns, and gotchas — without needing to re-explore the codebase from scratch.
 
-The `qa-server`, `qa-client`, and `qa-integrations` plan commands also accept an optional `prior_spec_path` second argument. When provided, the upstream spec is read first and treated as a binding contract (data shapes, API surfaces, endpoint definitions). This enables cross-domain chaining: a qa-server plan can feed a qa-client plan that consumes the same API contract.
+The `qa-server`, `frontend`, and `qa-integrations` plan commands also accept an optional `prior_spec_path` second argument. When provided, the upstream spec is read first and treated as a binding contract (data shapes, API surfaces, endpoint definitions). This enables cross-domain chaining: a qa-server plan can feed a frontend plan that consumes the same API contract.
 
 ### The Self-Improvement Cycle
 

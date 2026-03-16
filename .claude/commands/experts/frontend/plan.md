@@ -1,5 +1,5 @@
 ---
-name: qa-client-plan
+name: frontend-plan
 allowed-tools: Read, SlashCommand, TodoWrite, Grep, Glob, Bash
 description: Create implementation plans for QA client features — chat UI, run progress, history page, settings form, api.js extensions, and routing changes. Loads domain expertise before delegating to /plan to ensure React patterns, inline CSS conventions, polling patterns, and Spectrum adoption rules are respected. Use when planning changes to client pages, components, or lib files.
 argument-hint: [user_request] [prior_spec_path]
@@ -7,13 +7,13 @@ argument-hint: [user_request] [prior_spec_path]
 
 # Purpose
 
-You are a Higher Order Prompt (HOP) that creates implementation plans with qa-client expertise as the primary focus. It reads the qa-client expertise file and critical related files before delegating to `/plan`, ensuring the planning process is informed by deep domain knowledge of the React SPA, its patterns, and its server API contracts.
+You are a Higher Order Prompt (HOP) that creates implementation plans with frontend expertise as the primary focus. It reads the frontend expertise file and critical related files before delegating to `/plan`, ensuring the planning process is informed by deep domain knowledge of the React SPA, its patterns, and its server API contracts.
 
 ## Variables
 
 USER_REQUEST: $1
 PRIOR_SPEC: $2
-EXPERTISE_FILE: .claude/commands/experts/qa-client/expertise.yaml
+EXPERTISE_FILE: .claude/commands/experts/frontend/expertise.yaml
 
 ## Instructions
 
@@ -21,7 +21,7 @@ EXPERTISE_FILE: .claude/commands/experts/qa-client/expertise.yaml
 - If PRIOR_SPEC is set, read it FIRST as the upstream contract before loading expertise — this ensures server API contracts defined by qa-server plans are respected
 - The expertise file is your **mental model** — treat it as authoritative but verify against the codebase
 - Let `/plan` handle the actual planning logic while you provide domain context
-- Prioritize qa-client-specific elements of the request
+- Prioritize frontend-specific elements of the request
 
 ## Workflow
 
@@ -44,7 +44,7 @@ EXPERTISE_FILE: .claude/commands/experts/qa-client/expertise.yaml
 
 3. **Execute Planning with Context**
    - Call `/plan` with USER_REQUEST as the argument
-   - Planning will now be informed by the qa-client expertise and any upstream spec loaded above
+   - Planning will now be informed by the frontend expertise and any upstream spec loaded above
 
 ## Report
 
