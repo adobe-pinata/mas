@@ -81,53 +81,7 @@ agent-browser find role button --session <name>
 agent-browser find text "Submit" --session <name>
 ```
 
-## Command Quick Reference
-
-```bash
-# Launch options (flags before subcommand)
-agent-browser --args "--disable-web-security,--disable-gpu" open <url> --session <name>
-agent-browser --headed open <url> --session <name>
-agent-browser --profile <path> open <url> --session <name>
-export AGENT_BROWSER_ARGS="--disable-web-security,--disable-gpu"  # session-wide
-
-# Navigation
-agent-browser open <url> --session <name>
-agent-browser close --session <name>
-
-# Browser settings
-agent-browser set viewport 1920 1080 --session <name>
-agent-browser set device "iPhone 14" --session <name>
-agent-browser set geo <lat> <lng> --session <name>
-agent-browser set offline on --session <name>
-agent-browser set media dark --session <name>
-
-# Page analysis
-agent-browser snapshot -i --session <name>        # interactive elements + @refs
-agent-browser get url --session <name>
-agent-browser get title --session <name>
-agent-browser get text @eX --session <name>
-agent-browser find role button --session <name>   # semantic fallback
-agent-browser find text "Submit" --session <name> # text fallback
-
-# Interactions
-agent-browser click @eX --session <name>
-agent-browser fill @eX "text" --session <name>
-agent-browser select @eX "value" --session <name>
-agent-browser press Enter --session <name>
-
-# Verification
-agent-browser is visible @eX --session <name>
-agent-browser is enabled @eX --session <name>
-
-# Evidence
-agent-browser screenshot <path>.png --session <name>
-agent-browser wait 2000 --session <name>
-
-# Debugging
-agent-browser console --session <name>  # browser console messages
-agent-browser errors --session <name>   # page-level JS errors
-agent-browser eval "<js>" --session <name>
-```
+> Full CLI reference is in the `agent-browser` skill — load it at step 1. Do not duplicate commands here.
 
 ## Report
 
