@@ -4,12 +4,12 @@ description: Make modifications or report on csv files
 argument-hint: [csv_file] [user_request]
 allowed-tools: Glob, Grep, Read, Edit, Write
 disable-model-invocation: false
-hooks:
-  PostToolUse:
-    - matcher: "Read|Edit|Write"
-      hooks:
-        - type: command
-          command: "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/validators/csv-single-validator.py"
+# hooks:                                      # Example: add skill-scoped hooks when needed
+#   PostToolUse:
+#     - matcher: "Read|Edit|Write"
+#       hooks:
+#         - type: command
+#           command: "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/validators/csv-single-validator.py"
 ---
 
 # Purpose

@@ -6,7 +6,7 @@
     },
     "contextOptions": {
       "recordVideo": {
-        "dir": ".qa-reports/playwright/videos",
+        "dir": ".reports/e2e/playwright/videos",
         "size": {
           "width": 1920,
           "height": 1080

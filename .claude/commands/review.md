@@ -17,7 +17,7 @@ You operate in **ANALYSIS AND REPORTING mode** — you do NOT build, modify, or 
 ADW_ID: $1
 SPEC_FILE: $2
 AGENT_NAME: $3
-SCREENSHOT_DIR: `agents/$1/reviewer/review_img`
+SCREENSHOT_DIR: `.reports/review/agent-browser/$1`
 
 ## Instructions
 
@@ -99,7 +99,7 @@ Identify all files added, modified, or deleted. Note which ones are client files
    agent-browser --session review-ADW_ID close
    ```
 
-Collect all successfully saved screenshot paths in a list (relative to the worktree root, e.g. `agents/ADW_ID/reviewer/review_img/01-feature.png`).
+Collect all successfully saved screenshot paths in a list (relative to the worktree root, e.g. `.reports/review/agent-browser/ADW_ID/01-feature.png`).
 
 ### 5. Categorise Issues
 
@@ -174,14 +174,14 @@ Example (one blocker, one screenshot):
   "review_issues": [
     {
       "review_issue_number": 1,
-      "screenshot_path": "agents/abc12345/reviewer/review_img/01-checkout-cta.png",
+      "screenshot_path": ".reports/review/agent-browser/abc12345/01-checkout-cta.png",
       "screenshot_url": null,
       "issue_description": "Checkout CTA has no loading state — clicking it multiple times submits duplicate orders.",
       "issue_resolution": "Add a `disabled` attribute and spinner to the CTA button while the request is in-flight.",
       "issue_severity": "blocker"
     }
   ],
-  "screenshots": ["agents/abc12345/reviewer/review_img/01-checkout-cta.png"],
+  "screenshots": [".reports/review/agent-browser/abc12345/01-checkout-cta.png"],
   "screenshot_urls": []
 }
 ```

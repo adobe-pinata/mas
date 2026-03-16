@@ -2,7 +2,7 @@
 name: ux-walkthrough
 description: Walk through any app in apps/ as a real user — navigate the UI with browser automation, explore every page and interaction, and produce a structured UX findings report. Use this skill whenever someone wants to audit an app's UX, catch missing features, validate a user flow end-to-end, or see what a real user would experience. Triggers on: "walk through the app", "act as a user", "ux audit", "test the flow", "what's missing in the UI", "check the user experience".
 argument-hint: [app-name] [app-url]
-model: opus
+model: sonnet
 disable-model-invocation: false
 allowed-tools: Read, Glob, Grep, Write, Edit, Agent, Bash
 hooks:
