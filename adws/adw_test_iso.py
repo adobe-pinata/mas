@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run
 # /// script
-# dependencies = ["python-dotenv", "pydantic", "requests", "slack-sdk"]
+# dependencies = ["python-dotenv", "pydantic", "requests", "slack-sdk", "boto3>=1.26.0"]
 # ///
 
 """
@@ -35,8 +35,7 @@ from adw_modules.git_ops import commit_changes, finalize_git_operations
 from adw_modules.github import (
     fetch_issue,
     make_issue_comment,
-    get_repo_url,
-    extract_repo_path,
+    get_effective_repo_path,
 )
 from adw_modules.workflow_ops import (
     create_commit,
@@ -53,7 +52,8 @@ from adw_modules.data_types import (
 )
 from adw_modules.agent import execute_template
 from adw_modules.worktree_ops import validate_worktree
-from adw_modules.aio_files_uploader import AIOFilesUploader
+from adw_modules.r2_uploader import R2Uploader
+from adw_modules.app_config import get_app_config_value
 
 AGENT_TESTER = "tester"
 AGENT_E2E_TESTER = "e2e_tester"
@@ -98,48 +98,67 @@ def run_tests(
 
 def start_dev_server(
     worktree_path: str,
+    backend_port: int,
     frontend_port: int,
     logger: logging.Logger,
-) -> Optional[subprocess.Popen]:
-    """Start the Vite dev server in the worktree. Returns process or None on failure."""
-    client_path = os.path.join(worktree_path, "apps", "experience-qa", "client")
-    if not os.path.exists(client_path):
-        logger.warning(f"Client path not found: {client_path} — skipping E2E")
-        return None
+) -> bool:
+    """Start backend + frontend via the app's scripts/start_dev.sh.
 
-    env = {**os.environ, "PORT": str(frontend_port)}
+    The script is app-owned — each app repo defines its own startup topology,
+    health checks, and package manager. The agentic layer only injects ports.
+
+    Returns True if servers started successfully, False otherwise.
+    """
+    start_script = os.path.join(worktree_path, "scripts", "start_dev.sh")
+    if not os.path.exists(start_script):
+        logger.error(f"scripts/start_dev.sh not found in worktree: {worktree_path}")
+        return False
+
+    env = {**os.environ, "BACKEND_PORT": str(backend_port), "FRONTEND_PORT": str(frontend_port)}
     try:
-        proc = subprocess.Popen(
-            ["npm", "run", "dev", "--", "--port", str(frontend_port), "--strictPort"],
-            cwd=client_path,
+        result = subprocess.run(
+            ["bash", start_script],
+            cwd=worktree_path,
             env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
-        # Give the server a moment to start
-        time.sleep(8)
-        if proc.poll() is not None:
-            logger.error("Dev server exited immediately")
-            return None
-        logger.info(f"Dev server started on port {frontend_port} (pid {proc.pid})")
-        return proc
+        if result.stdout:
+            for line in result.stdout.strip().splitlines():
+                logger.info(line)
+        if result.returncode != 0:
+            logger.error(f"start_dev.sh failed (exit {result.returncode}): {result.stderr.strip()}")
+            return False
+        return True
+    except subprocess.TimeoutExpired:
+        logger.error("start_dev.sh timed out after 120s")
+        return False
     except Exception as e:
-        logger.error(f"Failed to start dev server: {e}")
-        return None
+        logger.error(f"Failed to run start_dev.sh: {e}")
+        return False
 
 
-def stop_dev_server(proc: subprocess.Popen, logger: logging.Logger) -> None:
-    """Terminate the dev server process."""
+def stop_dev_server(worktree_path: str, logger: logging.Logger) -> None:
+    """Stop dev servers by reading PIDs written by start_dev.sh."""
+    pids_file = os.path.join(worktree_path, ".dev_server.pids")
+    if not os.path.exists(pids_file):
+        logger.warning("No .dev_server.pids file found — servers may already be stopped")
+        return
     try:
-        proc.terminate()
-        proc.wait(timeout=10)
-        logger.info("Dev server stopped")
+        with open(pids_file) as f:
+            pids = f.read().split()
+        for pid in pids:
+            try:
+                os.kill(int(pid), 15)  # SIGTERM
+                logger.info(f"Sent SIGTERM to pid {pid}")
+            except ProcessLookupError:
+                pass
+            except Exception as e:
+                logger.warning(f"Error stopping pid {pid}: {e}")
+        os.remove(pids_file)
     except Exception as e:
-        logger.warning(f"Error stopping dev server: {e}")
-        try:
-            proc.kill()
-        except Exception:
-            pass
+        logger.warning(f"Error reading .dev_server.pids: {e}")
 
 
 def run_e2e_tests(
@@ -241,14 +260,14 @@ def main():
         sys.exit(1)
 
     worktree_path = state.get("worktree_path")
+    backend_port = state.get("backend_port", 9100)
     frontend_port = state.get("frontend_port", 9200)
 
     # Get repo info
     try:
-        from adw_modules.github import get_repo_url, extract_repo_path
-        repo_path = extract_repo_path(get_repo_url())
+        repo_path = get_effective_repo_path()
     except Exception as e:
-        logger.error(f"Error getting repo URL: {e}")
+        logger.error(f"Error getting repo path: {e}")
         sys.exit(1)
 
     # Find spec file
@@ -272,36 +291,36 @@ def main():
         logger.info("Starting dev server for E2E tests")
         make_issue_comment(issue_number, format_issue_message(adw_id, AGENT_E2E_TESTER, "Running E2E browser tests"))
 
-        server_proc = start_dev_server(worktree_path, frontend_port, logger)
-        if server_proc:
+        servers_started = start_dev_server(worktree_path, backend_port, frontend_port, logger)
+        if servers_started:
             try:
                 e2e_passed, e2e_results = run_e2e_tests(
                     spec_file, adw_id, frontend_port, logger, working_dir=worktree_path
                 )
                 logger.info(f"E2E tests: {'PASS' if e2e_passed else 'FAIL'} ({len(e2e_results)} results)")
             finally:
-                stop_dev_server(server_proc, logger)
+                stop_dev_server(worktree_path, logger)
         else:
-            logger.warning("Dev server could not start — skipping E2E tests")
+            logger.warning("Dev servers could not start — skipping E2E tests")
             e2e_results = [E2ETestResult(
                 test_name="dev_server_start",
                 status="failed",
                 test_path="",
-                error="Dev server could not start in worktree",
+                error="scripts/start_dev.sh failed — check worktree logs",
             )]
             e2e_passed = False
     else:
         logger.info("Skipping E2E tests (--skip-e2e)")
 
-    # --- Upload E2E screenshots to AIO Files ---
+    # --- Upload E2E screenshots to R2 ---
     screenshot_urls = {}
     if e2e_results:
-        uploader = AIOFilesUploader(logger)
+        uploader = R2Uploader(logger, app_name=get_app_config_value("app_name"), bucket_name=get_app_config_value("r2_bucket"))
         all_shots = [s for r in e2e_results for s in r.screenshots]
         if all_shots:
             screenshot_urls = uploader.upload_screenshots(all_shots, adw_id, base_dir=worktree_path)
             uploaded = sum(1 for v in screenshot_urls.values() if v.startswith("http"))
-            logger.info(f"Uploaded {uploaded}/{len(all_shots)} E2E screenshots to AIO Files")
+            logger.info(f"Uploaded {uploaded}/{len(all_shots)} E2E screenshots to R2")
 
     # --- Post results ---
     summary = format_test_summary(unit_results, e2e_results, screenshot_urls)

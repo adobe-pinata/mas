@@ -53,13 +53,16 @@ load_dotenv()
 # Optional environment variables
 GITHUB_PAT = os.getenv("GITHUB_PAT")
 
-# Get repository URL from git remote
+# Get repository path — APP env var + app config takes precedence over git remote
+from adw_modules.github import get_effective_repo_path
+from adw_modules.app_config import get_app_name
 try:
-    GITHUB_REPO_URL = get_repo_url()
-    REPO_PATH = extract_repo_path(GITHUB_REPO_URL)
-except ValueError as e:
+    REPO_PATH = get_effective_repo_path()
+except Exception as e:
     print(f"ERROR: {e}")
     sys.exit(1)
+
+_APP_OVERRIDE_ACTIVE = get_app_name() is not None
 
 # =============================================================================
 # Label-to-Workflow Mapping
@@ -170,7 +173,8 @@ def display_header():
 
     # Create compact single-line header (no box)
     labels_str = ", ".join(LABEL_WORKFLOW_MAP.keys())
-    header_line = f"[bold cyan]ADW Cron[/] │ [bold white]{repo_short}[/] │ Poll: [cyan]20s[/] │ Labels: [yellow]{labels_str}[/] │ {status}"
+    override_tag = " [dim][APP override][/]" if _APP_OVERRIDE_ACTIVE else ""
+    header_line = f"[bold cyan]ADW Cron[/] │ [bold white]{repo_short}[/]{override_tag} │ Poll: [cyan]20s[/] │ Labels: [yellow]{labels_str}[/] │ {status}"
 
     console.print(header_line)
 

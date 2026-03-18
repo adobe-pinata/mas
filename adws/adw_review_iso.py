@@ -55,7 +55,8 @@ from adw_modules.data_types import (
     AgentPromptResponse,
 )
 from adw_modules.agent import execute_template
-from adw_modules.aio_files_uploader import AIOFilesUploader
+from adw_modules.r2_uploader import R2Uploader
+from adw_modules.app_config import get_app_config_value
 from adw_modules.github_raw_uploader import upload_screenshots_as_raw_urls
 from adw_modules.worktree_ops import validate_worktree
 
@@ -197,11 +198,11 @@ def upload_review_screenshots(
     screenshot_urls = []
     need_fallback = True
 
-    # --- Strategy 1: AIO Files (primary) ---
-    aio_uploader = AIOFilesUploader(logger)
-    if aio_uploader.enabled:
-        aio_urls = []
-        aio_failed = False
+    # --- Strategy 1: R2 (primary) ---
+    r2_uploader = R2Uploader(logger, app_name=get_app_config_value("app_name"), bucket_name=get_app_config_value("r2_bucket"))
+    if r2_uploader.enabled:
+        r2_urls = []
+        r2_failed = False
 
         for local_path in review_result.screenshots:
             abs_path = os.path.join(worktree_path, local_path)
@@ -210,24 +211,25 @@ def upload_review_screenshots(
                 logger.warning(f"Screenshot not found: {abs_path}")
                 continue
 
-            remote_path = f"adw/{adw_id}/review/{os.path.basename(local_path)}"
-            url = aio_uploader.upload_file(abs_path, remote_path)
+            namespace = get_app_config_value("app_name", "agentic")
+            object_key = f"adw/{namespace}/{adw_id}/review/{os.path.basename(local_path)}"
+            url = r2_uploader.upload_file(abs_path, object_key)
 
             if url:
-                aio_urls.append(url)
-                logger.info(f"Uploaded screenshot via AIO Files: {url}")
+                r2_urls.append(url)
+                logger.info(f"Uploaded screenshot via R2: {url}")
             else:
-                logger.warning(f"AIO Files upload failed for: {local_path}")
-                aio_failed = True
+                logger.warning(f"R2 upload failed for: {local_path}")
+                r2_failed = True
                 break
 
-        if not aio_failed and aio_urls:
-            screenshot_urls = aio_urls
+        if not r2_failed and r2_urls:
+            screenshot_urls = r2_urls
             need_fallback = False
         else:
-            logger.info("AIO Files upload incomplete — falling through to GitHub Raw URLs")
+            logger.info("R2 upload incomplete — falling through to GitHub Raw URLs")
     else:
-        logger.info("AIO Files not configured — using GitHub Raw URL fallback")
+        logger.info("R2 not configured — using GitHub Raw URL fallback")
 
     # --- Strategy 2: GitHub Raw URLs (fallback) ---
     if need_fallback:
@@ -517,18 +519,18 @@ def main():
         
         review_result = run_review(spec_file, adw_id, logger, working_dir=worktree_path)
         
-        # Check if we have blocker issues
-        blocker_issues = [
-            issue for issue in review_result.review_issues 
-            if issue.issue_severity == "blocker"
+        # Check for fixable issues (blocker + tech_debt)
+        fixable_issues = [
+            issue for issue in review_result.review_issues
+            if issue.issue_severity in ("blocker", "tech_debt")
         ]
-        
-        # If no blockers or skip resolution, we're done
-        if not blocker_issues or skip_resolution:
+
+        # If no fixable issues or skip resolution, we're done
+        if not fixable_issues or skip_resolution:
             break
-        
-        # We have blockers and need to resolve them
-        resolve_blocker_issues(blocker_issues, issue_number, adw_id, worktree_path, logger)
+
+        # Resolve fixable issues
+        resolve_blocker_issues(fixable_issues, issue_number, adw_id, worktree_path, logger)
         
         # If this was the last attempt, break regardless
         if review_attempt >= MAX_REVIEW_RETRY_ATTEMPTS - 1:

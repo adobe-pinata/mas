@@ -6,7 +6,8 @@ import subprocess
 from typing import Dict, List, Optional
 from pathlib import Path
 
-from adw_modules.aio_files_uploader import AIOFilesUploader
+from adw_modules.r2_uploader import R2Uploader
+from adw_modules.app_config import get_app_config_value
 from adw_modules.data_types import IssueCreationRequest, IssueCreationResult
 
 
@@ -42,27 +43,25 @@ def upload_issue_screenshots(
         return {}
 
     logger.info(f"Uploading {len(screenshot_paths)} screenshots for issue creation")
-    uploader = AIOFilesUploader(logger)
+    uploader = R2Uploader(logger, app_name=get_app_config_value("app_name"), bucket_name=get_app_config_value("r2_bucket"))
 
     url_mapping = {}
     for local_path in screenshot_paths:
         if not local_path:
             continue
 
-        # Convert to absolute path if relative
         abs_path = local_path if os.path.isabs(local_path) else os.path.abspath(local_path)
 
-        # Check if file exists
         if not os.path.exists(abs_path):
             logger.warning(f"Screenshot not found: {abs_path}")
-            url_mapping[local_path] = local_path  # Keep original path as fallback
+            url_mapping[local_path] = local_path
             continue
 
-        # Upload with organized path: adw/{adw_id}/issues/{filename}
+        namespace = get_app_config_value("app_name", "agentic")
         filename = Path(abs_path).name
-        remote_path = f"adw/{adw_id}/issues/{filename}"
+        object_key = f"adw/{namespace}/{adw_id}/issues/{filename}"
 
-        url = uploader.upload_file(abs_path, remote_path)
+        url = uploader.upload_file(abs_path, object_key)
 
         if url:
             url_mapping[local_path] = url

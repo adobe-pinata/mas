@@ -9,7 +9,7 @@ import logging
 from typing import Optional, Tuple
 
 # Import GitHub functions from existing module
-from adw_modules.github import get_repo_url, extract_repo_path, make_issue_comment
+from adw_modules.github import get_repo_url, extract_repo_path, make_issue_comment, get_effective_repo_path
 
 
 def get_current_branch(cwd: Optional[str] = None) -> str:
@@ -40,10 +40,8 @@ def push_branch(
 
 def check_pr_exists(branch_name: str) -> Optional[str]:
     """Check if PR exists for branch. Returns PR URL if exists."""
-    # Use github.py functions to get repo info
     try:
-        repo_url = get_repo_url()
-        repo_path = extract_repo_path(repo_url)
+        repo_path = get_effective_repo_path()
     except Exception as e:
         return None
 
@@ -123,10 +121,8 @@ def commit_changes(
 
 def get_pr_number(branch_name: str) -> Optional[str]:
     """Get PR number for a branch. Returns PR number if exists."""
-    # Use github.py functions to get repo info
     try:
-        repo_url = get_repo_url()
-        repo_path = extract_repo_path(repo_url)
+        repo_path = get_effective_repo_path()
     except Exception as e:
         return None
 
@@ -157,8 +153,7 @@ def get_pr_number(branch_name: str) -> Optional[str]:
 def approve_pr(pr_number: str, logger: logging.Logger) -> Tuple[bool, Optional[str]]:
     """Approve a PR. Returns (success, error_message)."""
     try:
-        repo_url = get_repo_url()
-        repo_path = extract_repo_path(repo_url)
+        repo_path = get_effective_repo_path()
     except Exception as e:
         return False, f"Failed to get repo info: {e}"
 
@@ -194,9 +189,9 @@ def merge_pr(
         logger: Logger instance
         merge_method: One of 'merge', 'squash', 'rebase' (default: 'squash')
     """
+    # Resolve repo for merge operations
     try:
-        repo_url = get_repo_url()
-        repo_path = extract_repo_path(repo_url)
+        repo_path = get_effective_repo_path()
     except Exception as e:
         return False, f"Failed to get repo info: {e}"
 
@@ -290,8 +285,7 @@ def finalize_git_operations(
         # Create new PR - fetch issue data first
         if issue_number:
             try:
-                repo_url = get_repo_url()
-                repo_path = extract_repo_path(repo_url)
+                repo_path = get_effective_repo_path()
                 from adw_modules.github import fetch_issue
 
                 issue = fetch_issue(issue_number, repo_path)

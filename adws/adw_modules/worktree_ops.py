@@ -5,6 +5,7 @@ and allocating unique ports for each isolated instance.
 """
 
 import os
+import shutil
 import subprocess
 import logging
 import socket
@@ -29,10 +30,15 @@ def create_worktree(adw_id: str, branch_name: str, logger: logging.Logger) -> Tu
         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     )
     
-    # Create trees directory if it doesn't exist
-    trees_dir = os.path.join(project_root, "trees")
+    # Determine trees directory — app-layer clones go under apps/{app}/trees/
+    from adw_modules.app_config import get_app_repo, get_app_name
+    app = get_app_name()
+    if app:
+        trees_dir = os.path.join(project_root, "apps", app, "trees")
+    else:
+        trees_dir = os.path.join(project_root, "trees")
     os.makedirs(trees_dir, exist_ok=True)
-    
+
     # Construct worktree path
     worktree_path = os.path.join(trees_dir, adw_id)
     
@@ -40,35 +46,74 @@ def create_worktree(adw_id: str, branch_name: str, logger: logging.Logger) -> Tu
     if os.path.exists(worktree_path):
         logger.warning(f"Worktree already exists at {worktree_path}")
         return worktree_path, None
-    
-    # First, fetch latest changes from origin
-    logger.info("Fetching latest changes from origin")
-    fetch_result = subprocess.run(
-        ["git", "fetch", "origin"], 
-        capture_output=True, 
-        text=True, 
-        cwd=project_root
-    )
-    if fetch_result.returncode != 0:
-        logger.warning(f"Failed to fetch from origin: {fetch_result.stderr}")
-    
-    # Create the worktree using git, branching from origin/main
-    # Use -b to create the branch as part of worktree creation
-    cmd = ["git", "worktree", "add", "-b", branch_name, worktree_path, "origin/main"]
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=project_root)
-    
-    if result.returncode != 0:
-        # If branch already exists, try without -b
-        if "already exists" in result.stderr:
-            cmd = ["git", "worktree", "add", worktree_path, branch_name]
-            result = subprocess.run(cmd, capture_output=True, text=True, cwd=project_root)
-            
+
+    app_repo = get_app_repo()
+    if app_repo:
+        # Clone the app repo directly — origin will point at the app repo
+        clone_url = f"https://github.com/{app_repo}.git"
+        logger.info(f"Cloning app repo {clone_url} into {worktree_path}")
+        result = subprocess.run(
+            ["git", "clone", clone_url, worktree_path],
+            capture_output=True,
+            text=True,
+        )
         if result.returncode != 0:
-            error_msg = f"Failed to create worktree: {result.stderr}"
+            error_msg = f"Failed to clone {clone_url}: {result.stderr}"
             logger.error(error_msg)
             return None, error_msg
-    
-    logger.info(f"Created worktree at {worktree_path} for branch {branch_name}")
+
+        # Create the ADW branch in the clone
+        branch_result = subprocess.run(
+            ["git", "checkout", "-b", branch_name],
+            capture_output=True,
+            text=True,
+            cwd=worktree_path,
+        )
+        if branch_result.returncode != 0:
+            error_msg = f"Failed to create branch {branch_name}: {branch_result.stderr}"
+            logger.error(error_msg)
+            return None, error_msg
+
+        # Symlink agentic harness tooling into the clone so Claude Code finds skills
+        for name in [".claude", "CLAUDE.md", "adws"]:
+            src = os.path.join(project_root, name)
+            dst = os.path.join(worktree_path, name)
+            if os.path.exists(src) and not os.path.exists(dst):
+                os.symlink(src, dst)
+                logger.info(f"Symlinked {name} into worktree")
+
+        logger.info(f"Cloned {app_repo} into {worktree_path} on branch {branch_name}")
+    else:
+        # Existing git worktree add behavior (unchanged)
+        # First, fetch latest changes from origin
+        logger.info("Fetching latest changes from origin")
+        fetch_result = subprocess.run(
+            ["git", "fetch", "origin"],
+            capture_output=True,
+            text=True,
+            cwd=project_root,
+        )
+        if fetch_result.returncode != 0:
+            logger.warning(f"Failed to fetch from origin: {fetch_result.stderr}")
+
+        # Create the worktree using git, branching from origin/main
+        # Use -b to create the branch as part of worktree creation
+        cmd = ["git", "worktree", "add", "-b", branch_name, worktree_path, "origin/main"]
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=project_root)
+
+        if result.returncode != 0:
+            # If branch already exists, try without -b
+            if "already exists" in result.stderr:
+                cmd = ["git", "worktree", "add", worktree_path, branch_name]
+                result = subprocess.run(cmd, capture_output=True, text=True, cwd=project_root)
+
+            if result.returncode != 0:
+                error_msg = f"Failed to create worktree: {result.stderr}"
+                logger.error(error_msg)
+                return None, error_msg
+
+        logger.info(f"Created worktree at {worktree_path} for branch {branch_name}")
+
     return worktree_path, None
 
 
@@ -95,27 +140,39 @@ def validate_worktree(adw_id: str, state: ADWState) -> Tuple[bool, Optional[str]
     # Check directory exists
     if not os.path.exists(worktree_path):
         return False, f"Worktree directory not found: {worktree_path}"
-    
-    # Check git knows about it
-    result = subprocess.run(["git", "worktree", "list"], capture_output=True, text=True)
-    if worktree_path not in result.stdout:
-        return False, "Worktree not registered with git"
-    
-    return True, None
+
+    # For app-repo clones, it's a standalone git clone — check .git exists
+    # For agentic-harness worktrees, check git worktree list
+    git_dir = os.path.join(worktree_path, ".git")
+    if os.path.isdir(git_dir):
+        # Standalone clone (app-repo) — .git directory means it's a full clone
+        return True, None
+    elif os.path.isfile(git_dir):
+        # Git worktree — .git is a file pointing to the main repo
+        result = subprocess.run(["git", "worktree", "list"], capture_output=True, text=True)
+        if worktree_path not in result.stdout:
+            return False, "Worktree not registered with git"
+        return True, None
+    else:
+        return False, f"No .git found in {worktree_path}"
 
 
 def get_worktree_path(adw_id: str) -> str:
     """Get absolute path to worktree.
-    
+
     Args:
         adw_id: The ADW ID
-        
+
     Returns:
         Absolute path to worktree directory
     """
     project_root = os.path.dirname(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     )
+    from adw_modules.app_config import get_app_name
+    app = get_app_name()
+    if app:
+        return os.path.join(project_root, "apps", app, "trees", adw_id)
     return os.path.join(project_root, "trees", adw_id)
 
 
@@ -130,21 +187,37 @@ def remove_worktree(adw_id: str, logger: logging.Logger) -> Tuple[bool, Optional
         Tuple of (success, error_message)
     """
     worktree_path = get_worktree_path(adw_id)
-    
-    # First remove via git
-    cmd = ["git", "worktree", "remove", worktree_path, "--force"]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    
-    if result.returncode != 0:
-        # Try to clean up manually if git command failed
-        if os.path.exists(worktree_path):
+
+    if not os.path.exists(worktree_path):
+        logger.warning(f"Worktree path does not exist: {worktree_path}")
+        return True, None
+
+    # Determine if this is a standalone clone (.git is a dir) or a git worktree (.git is a file)
+    git_dir = os.path.join(worktree_path, ".git")
+    is_clone = os.path.isdir(git_dir)
+
+    if is_clone:
+        # Standalone clone (app-repo) — just remove the directory
+        try:
+            shutil.rmtree(worktree_path)
+            logger.info(f"Removed cloned worktree at {worktree_path}")
+        except Exception as e:
+            return False, f"Failed to remove clone directory: {e}"
+    else:
+        # Git worktree — remove via git
+        cmd = ["git", "worktree", "remove", worktree_path, "--force"]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            # Try manual cleanup as fallback
             try:
                 shutil.rmtree(worktree_path)
                 logger.warning(f"Manually removed worktree directory: {worktree_path}")
             except Exception as e:
                 return False, f"Failed to remove worktree: {result.stderr}, manual cleanup failed: {e}"
-    
-    logger.info(f"Removed worktree at {worktree_path}")
+
+        logger.info(f"Removed worktree at {worktree_path}")
+
     return True, None
 
 

@@ -34,7 +34,7 @@ class ADWState:
     def update(self, **kwargs):
         """Update state with new key-value pairs."""
         # Filter to only our core fields
-        core_fields = {"adw_id", "issue_number", "issue_url", "issue_title", "branch_name", "plan_file", "issue_class", "worktree_path", "backend_port", "frontend_port", "model_set", "all_adws", "slack_thread_ts", "schema_validation_result"}
+        core_fields = {"adw_id", "issue_number", "issue_url", "issue_title", "branch_name", "plan_file", "issue_class", "worktree_path", "backend_port", "frontend_port", "model_set", "all_adws", "slack_thread_ts", "schema_validation_result", "target_repo"}
         for key, value in kwargs.items():
             if key in core_fields:
                 self.data[key] = value
@@ -109,6 +109,7 @@ class ADWState:
             all_adws=self.data.get("all_adws", []),
             slack_thread_ts=self.data.get("slack_thread_ts"),
             schema_validation_result=self.data.get("schema_validation_result"),
+            target_repo=self.data.get("target_repo"),
         )
 
         # Save as JSON

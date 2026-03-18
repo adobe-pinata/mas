@@ -105,12 +105,12 @@ def main():
     # Validate environment
     check_env_vars(logger)
 
-    # Get repo information
+    # Get repo information — respects APP env var override
     try:
-        github_repo_url = get_repo_url()
-        repo_path = extract_repo_path(github_repo_url)
-    except ValueError as e:
-        logger.error(f"Error getting repository URL: {e}")
+        from adw_modules.github import get_effective_repo_path
+        repo_path = get_effective_repo_path()
+    except Exception as e:
+        logger.error(f"Error getting repository path: {e}")
         sys.exit(1)
 
     # Check if worktree already exists
@@ -199,6 +199,10 @@ def main():
             sys.exit(1)
         
         state.update(worktree_path=worktree_path)
+        from adw_modules.app_config import get_app_repo
+        target_repo = get_app_repo()
+        if target_repo:
+            state.update(target_repo=target_repo)
         state.save("adw_plan_iso")
         logger.info(f"Created worktree at {worktree_path}")
         
