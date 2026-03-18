@@ -222,6 +222,13 @@ def get_safe_subprocess_env() -> Dict[str, str]:
         
         # Cloudflare tunnel token (optional)
         "CLOUDFLARED_TUNNEL_TOKEN": os.getenv("CLOUDFLARED_TUNNEL_TOKEN"),
+
+        # Cloudflare R2 (screenshot uploads)
+        "CLOUDFLARE_ACCOUNT_ID": os.getenv("CLOUDFLARE_ACCOUNT_ID"),
+        "CLOUDFLARE_R2_ACCESS_KEY_ID": os.getenv("CLOUDFLARE_R2_ACCESS_KEY_ID"),
+        "CLOUDFLARE_R2_SECRET_ACCESS_KEY": os.getenv("CLOUDFLARE_R2_SECRET_ACCESS_KEY"),
+        "CLOUDFLARE_R2_BUCKET_NAME": os.getenv("CLOUDFLARE_R2_BUCKET_NAME"),
+        "CLOUDFLARE_R2_PUBLIC_DOMAIN": os.getenv("CLOUDFLARE_R2_PUBLIC_DOMAIN"),
         
         # Essential system environment variables
         "HOME": os.getenv("HOME"),
@@ -236,6 +243,9 @@ def get_safe_subprocess_env() -> Dict[str, str]:
         "PYTHONPATH": os.getenv("PYTHONPATH"),
         "PYTHONUNBUFFERED": "1",  # Useful for subprocess output
         
+        # ADW multi-repo support — APP env var drives app config resolution
+        "APP": os.getenv("APP"),
+
         # Working directory tracking
         "PWD": os.getcwd(),
     }

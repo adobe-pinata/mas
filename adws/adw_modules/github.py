@@ -80,6 +80,15 @@ def extract_repo_path(github_url: str) -> str:
     return github_url.replace("https://github.com/", "").replace(".git", "")
 
 
+def get_effective_repo_path() -> str:
+    """APP env var + app config takes precedence over git remote origin."""
+    from adw_modules.app_config import get_app_repo
+    app_repo = get_app_repo()
+    if app_repo:
+        return app_repo
+    return extract_repo_path(get_repo_url())
+
+
 def autolink_issue_references(text: str, repo_path: str) -> str:
     """Convert issue references to markdown links.
 
@@ -194,9 +203,7 @@ def fetch_issue(issue_number: str, repo_path: str) -> GitHubIssue:
 
 def make_issue_comment(issue_id: str, comment: str) -> None:
     """Post a comment to a GitHub issue using gh CLI."""
-    # Get repo information from git remote
-    github_repo_url = get_repo_url()
-    repo_path = extract_repo_path(github_repo_url)
+    repo_path = get_effective_repo_path()
 
     # Auto-link issue references in the comment
     comment = autolink_issue_references(comment, repo_path)
@@ -235,9 +242,7 @@ def make_issue_comment(issue_id: str, comment: str) -> None:
 
 def mark_issue_in_progress(issue_id: str) -> None:
     """Mark issue as in progress by adding label and comment."""
-    # Get repo information from git remote
-    github_repo_url = get_repo_url()
-    repo_path = extract_repo_path(github_repo_url)
+    repo_path = get_effective_repo_path()
 
     # Add "in_progress" label
     cmd = [

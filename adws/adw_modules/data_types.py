@@ -239,6 +239,7 @@ class ADWStateData(BaseModel):
     all_adws: List[str] = Field(default_factory=list)
     slack_thread_ts: Optional[str] = None  # Slack thread timestamp for threaded notifications
     schema_validation_result: Optional[Dict[str, Any]] = None  # Schema validation results from test_runner phase
+    target_repo: Optional[str] = None  # e.g. "joaquinrivero/content-qa" — set when APP env var is active
 
 
 class ReviewIssue(BaseModel):
