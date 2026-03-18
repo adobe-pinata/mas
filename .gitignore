@@ -51,6 +51,7 @@ screenshots/
 
 # QA workflow reports (playwright-validator + agent-browser output)
 .qa-reports/
+.reports/
 .claude/data/claude-model-cache
 .claude/data/sessions
 **/.claude/data/sessions/
