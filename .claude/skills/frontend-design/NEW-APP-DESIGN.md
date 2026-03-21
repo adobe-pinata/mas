@@ -32,9 +32,9 @@ Pick ONE and commit. Each maps to specific Spectrum configuration:
 ### Clean & Minimal
 **Best for:** Productivity tools, settings pages, utilities
 - Theme: `default`
-- Density: `regular`
+- Component sizes: `size="M"` (default)
 - Color scheme: light (dark as secondary)
-- Typography: `Heading size="M"` for page titles, `Body size="M"`, generous whitespace
+- Typography: `Heading size="M"` for page titles, `Text` for body copy, generous whitespace
 - Layout: Simple `Flex direction="column"` with `size-300`+ gaps
 - Color: Muted — lean on `neutral`, `informative`. Minimal use of `positive`/`negative`
 - Components: Prefer understated variants — `Button variant="secondary"`, subtle `Divider`s
@@ -42,9 +42,8 @@ Pick ONE and commit. Each maps to specific Spectrum configuration:
 ### Expressive & Vibrant
 **Best for:** Consumer-facing, marketing, onboarding flows
 - Theme: `express` (intentionally different from default)
-- Density: `regular` or `spacious`
-- Scale: `large`
-- Typography: `Heading size="XL"` or `"XXL"` for hero text, `Body size="L"` for readability
+- Component sizes: `size="L"` or `"XL"` on components
+- Typography: `Heading size="XL"` or `"XXL"` for hero text, `Text` for body copy
 - Layout: Asymmetric `Grid` layouts, large `View` sections with background colors
 - Color: Bold semantic colors — `accent` buttons, `informative` badges, layered backgrounds
 - Components: `IllustratedMessage` for empty states, large `ActionButton`s, `Avatar`
@@ -52,8 +51,8 @@ Pick ONE and commit. Each maps to specific Spectrum configuration:
 ### Information-Dense & Structured
 **Best for:** Dashboards, admin panels, monitoring tools, data tables
 - Theme: `default`
-- Density: `compact`
-- Typography: `Heading size="S"` for sections, `Body size="S"`, `Detail` for metadata/labels
+- Component sizes: `size="S"` across all components for maximum density
+- Typography: `Heading size="S"` for sections, `Text` for content, uppercase `style()` macro text for metadata labels
 - Layout: `Grid` with tight `size-100` gaps, `View` panels with `gray-75`/`gray-100` layering
 - Color: Semantic status colors are load-bearing — `positive`/`negative`/`notice` for real meaning
 - Components: `TableView`, `ListView`, `Meter`, `StatusLight`, `Badge`, `TagGroup` for filters
@@ -61,8 +60,8 @@ Pick ONE and commit. Each maps to specific Spectrum configuration:
 ### Editorial & Spatial
 **Best for:** Story-focused UIs, documentation, narrative onboarding, content-rich pages
 - Theme: `default`
-- Density: `regular` or `spacious`
-- Typography: Mixed `Heading` scales — `"XXL"` for page titles, `"S"` for section labels. `Body size="L"` for readability. `Detail` for captions
+- Component sizes: `size="M"` or `"L"` for spacious feel
+- Typography: Mixed `Heading` scales — `"XXL"` for page titles, `"S"` for section labels. `Text` for body copy. Uppercase `style()` macro text for captions
 - Layout: Asymmetric `Flex`/`Grid`, large negative space zones via `View` with generous padding
 - Color: Restrained palette — mostly `neutral` and `gray-*` backgrounds, single accent color for CTAs
 - Components: `IllustratedMessage`, `Breadcrumbs` for navigation, `Divider` for rhythm
@@ -74,21 +73,21 @@ Pick ONE and commit. Each maps to specific Spectrum configuration:
 Based on your stance, set up the root Provider:
 
 ```jsx
-import { Provider, defaultTheme } from '@react-spectrum/s2';
-// or: import { Provider, expressTheme } from '@react-spectrum/s2';
+import { Provider } from '@react-spectrum/s2';
+import '@react-spectrum/s2/page.css';
 
 <Provider
-  theme={defaultTheme}       // or expressTheme
-  colorScheme="light"        // "light" | "dark" | "auto"
-  density="regular"          // "compact" | "regular" | "spacious"
-  scale="medium"             // "medium" | "large"
+  colorScheme="light"        // "light" | "dark" | undefined (follows OS)
+  background="base"          // "base" | "layer-1" | "layer-2" | undefined
   locale="en-US"
 >
   {children}
 </Provider>
 ```
 
-**Set these ONCE at the root.** Don't override per-component unless you have a specific reason (e.g., a compact data table inside a regular-density page — document why).
+**S2 Provider props:** `colorScheme`, `background`, `locale`, `router`, `styles`, `elementType`. There is **no** `density`, `scale`, or `theme` prop — control density via per-component `size` props, applied consistently across the page.
+
+**Set Provider ONCE at the root.** Control visual density by choosing a consistent `size` across components (e.g., all `size="S"` for compact feel, all `size="M"` for regular).
 
 ---
 
@@ -101,8 +100,8 @@ For each UI need, find the right S2 component. Use MCP tools to verify props and
 | Need | Component | Not this |
 |------|-----------|----------|
 | Page title | `<Heading size="XL">` | `<h1>` |
-| Body text | `<Body>` or `<Text>` | `<p>` |
-| Metadata label | `<Detail>` | `<span className="label">` |
+| Body text | `<Text>` | `<p>` |
+| Metadata label | `style()` macro with uppercase | `<span className="label">` |
 | Button | `<Button variant="...">` | `<button>` |
 | Text input | `<TextField>` | `<input>` |
 | Select | `<Picker>` | `<select>` |

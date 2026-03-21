@@ -30,8 +30,8 @@ The key idea: Spectrum gives you a vocabulary, but using every component at its 
    ```
    ## Design Language Analysis
    ### Files Scanned: [list 3-5 files with reasons]
-   ### Provider Config: theme, density, colorScheme, scale
-   ### Typography Pattern: Heading sizes, Body sizes in use
+   ### Provider Config: colorScheme, background, locale
+   ### Typography Pattern: Heading sizes, Text usage, component size props
    ### Layout Primitives: Flex/Grid/View patterns, spacing tokens
    ### Component Inventory: S2 components already in use
    ### Color Tokens: semantic colors, background layering
@@ -44,7 +44,7 @@ The key idea: Spectrum gives you a vocabulary, but using every component at its 
    **Do not skip this.** Jumping to code without analysis produces inconsistent UIs.
 5. **For new apps** — Follow `NEW-APP-DESIGN.md`: pick a design stance, configure Provider, select components.
 6. **Look up S2 components** — Use MCP tools to confirm the right components, their props, and import paths. Don't guess — verify.
-7. **Write code** — Apply design philosophy + correct component API. Use Spectrum layout primitives (`Flex`, `Grid`, `View`), typography components (`Heading`, `Body`, `Detail`), and semantic color tokens.
+7. **Write code** — Apply design philosophy + correct component API. Use Spectrum layout primitives (`Flex`, `Grid`, `View`), typography components (`Heading`, `Text`, `Content`), and semantic color tokens. Note: `Body` and `Detail` are **not** S2 exports — use `Text` instead.
 8. **Self-check** before returning:
    - No raw `<div>`, `<button>`, `<input>` where S2 equivalents exist
    - No `style={{ padding: "12px" }}` — use size tokens (`padding="size-150"`)

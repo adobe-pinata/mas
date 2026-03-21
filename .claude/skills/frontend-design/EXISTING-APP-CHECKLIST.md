@@ -11,11 +11,10 @@ Use this workflow when adding components, pages, or UI modifications to an app t
 Scan 3–5 existing files that are closest to the work you're about to do. Document:
 
 ### Provider Configuration
-- Theme: default or express?
-- Color scheme: light, dark, or both?
-- Density: compact, regular, or spacious?
-- Scale: medium or large?
+- Color scheme: light, dark, or OS-following (undefined)?
+- Background: `base`, `layer-1`, `layer-2`, or none?
 - Locale?
+- What `size` prop is used consistently across components? (`S`, `M`, `L`)
 
 ### Layout Patterns
 - Primary layout primitives in use (`Flex`, `Grid`, `View`)?
@@ -25,8 +24,8 @@ Scan 3–5 existing files that are closest to the work you're about to do. Docum
 
 ### Typography Hierarchy
 - Which `Heading` sizes are used and where (page title, section title, card title)?
-- `Body` sizes: `S`, `M`, `L` — which for primary vs secondary text?
-- `Detail` usage — for labels, metadata, or section headers?
+- `Text` usage — where and how is body copy rendered?
+- Label-style text — is it done via `style()` macro with uppercase, or raw `<span>`?
 - Any raw `<h1>`–`<p>` tags that should be Spectrum?
 
 ### Component Inventory
@@ -67,7 +66,7 @@ For each new UI element needed:
 
 ### Consistency Constraints
 What MUST remain consistent:
-- [ ] Same density level as existing pages
+- [ ] Same component `size` props as existing pages
 - [ ] Same `Heading` size hierarchy
 - [ ] Same spacing tokens
 - [ ] Same color token semantics
@@ -83,12 +82,12 @@ What CAN vary (with justification):
 Now write code. As you implement:
 
 - [ ] Every layout uses `Flex`, `Grid`, or `View` — no raw `<div style={...}>`
-- [ ] Every text element uses `Heading`, `Body`, `Text`, `Detail`, or `Content` — no raw `<h1>`–`<p>`
+- [ ] Every text element uses `Heading`, `Text`, or `Content` — no raw `<h1>`–`<p>` (note: `Body` and `Detail` are not S2 exports)
 - [ ] Every interactive element uses S2 components — no raw `<button>`, `<input>`, `<select>`
 - [ ] Spacing uses size tokens (`size-100`, `size-150`, etc.) — no pixel values
 - [ ] Colors use semantic tokens — no hex values
 - [ ] Component variants chosen semantically (`Button variant="primary"` vs `"secondary"` vs `"accent"`) — not defaulted
-- [ ] Density matches Provider config — not overridden per-component
+- [ ] Component `size` props are consistent across the page (S2 has no Provider-level density)
 - [ ] Import paths are `@react-spectrum/s2` — no mixed Spectrum 1 imports
 
 ---
@@ -99,7 +98,7 @@ Now write code. As you implement:
 - **Skipping Phase 2** — Jumping to code produces inconsistent UIs.
 - **Introducing new tokens** — If existing pages use `size-200` for card gaps, don't use `size-300` without reason.
 - **Creating custom components** when an S2 component exists — always check MCP tools first.
-- **Mixing density** — If the app uses `compact`, don't add a `regular` density section.
+- **Mixing component sizes** — If the app uses `size="S"` throughout, don't add `size="L"` components.
 - **Adding custom colors** — If the semantic system doesn't have what you need, reconsider the design, not the token system.
 
 ---

@@ -260,17 +260,17 @@ Existing settings page uses `Flex direction="column" gap="size-200"` for form fi
 ### Right: ProgressCircle
 
 ```jsx
-import { Flex, ProgressCircle, Body } from '@react-spectrum/s2';
+import { Flex, ProgressCircle, Text } from '@react-spectrum/s2';
 
 {loading && (
   <Flex direction="column" alignItems="center" gap="size-150">
     <ProgressCircle isIndeterminate aria-label="Loading" />
-    <Body size="S">Loading...</Body>
+    <Text>Loading...</Text>
   </Flex>
 )}
 ```
 
-**Why:** `ProgressCircle` integrates with Spectrum's motion system, respects density, and is accessible. Custom spinners don't.
+**Why:** `ProgressCircle` integrates with Spectrum's motion system and is accessible. Custom spinners don't. Note: `Body` is not exported from S2 — use `Text` instead.
 
 ---
 

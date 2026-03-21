@@ -47,19 +47,22 @@ Spectrum uses a consistent size token scale instead of pixel values. Use these f
 
 ## Density
 
-Set once at the Provider level. Affects all components uniformly.
+S2's `Provider` does **not** have a `density` prop. Density is controlled per-component via the `size` prop.
 
-| Density | Use Case | Character |
+| Desired Feel | How to Achieve | Character |
 |---------|----------|-----------|
-| `compact` | Dashboards, data tables, admin panels | Maximum info density, tight spacing |
-| `regular` | General applications, forms, content pages | Balanced readability and density |
-| `spacious` | Consumer-facing, onboarding, editorial | Generous whitespace, relaxed feel |
+| Compact | `size="S"` on components + tight spacing tokens (`gap="size-100"`) | Maximum info density |
+| Regular | `size="M"` (default) + standard spacing (`gap="size-200"`) | Balanced readability |
+| Spacious | `size="L"` or `"XL"` + generous spacing (`gap="size-300"+`) | Relaxed, editorial feel |
 
 ```jsx
-<Provider density="compact">  {/* All children inherit */}
+// No density prop on Provider — use size on individual components:
+<TextField size="S" label="Name" />
+<Button size="S" variant="accent">Save</Button>
+<Picker size="S" label="Region">{...}</Picker>
 ```
 
-**Don't mix densities** within a page unless you have a specific reason (e.g., a compact table inside a regular page — document why).
+**Be consistent** — pick a size level and apply it across all components on the page. Mixing `size="S"` and `size="L"` on the same page creates visual inconsistency.
 
 ---
 
@@ -76,7 +79,7 @@ Set once at the Provider level. Affects all components uniformly.
 - Suitable for marketing, onboarding, creative tools
 
 ```jsx
-import { Provider, defaultTheme, expressTheme } from '@react-spectrum/s2';
+import { Provider } from '@react-spectrum/s2';
 
 // Productivity app
 <Provider theme={defaultTheme} colorScheme="light">
@@ -162,37 +165,29 @@ import { Heading } from '@react-spectrum/s2';
 <Heading size="S">Recent Activity</Heading>
 ```
 
-### Body
-
-Body copy. Size relative to context.
-
-| Size | Use |
-|------|-----|
-| `L` | Primary body text (editorial, spacious) |
-| `M` | Standard body text |
-| `S` | Secondary text, descriptions |
-| `XS` | Fine print, captions |
-
-### Detail
-
-Uppercase label-style text. Creates hierarchy without headings.
-
-```jsx
-import { Detail } from '@react-spectrum/s2';
-
-<Detail>LAST UPDATED</Detail>
-<Detail>12 ITEMS</Detail>
-```
-
-Use for: section labels, metadata rows, table column headers, timestamps.
-
 ### Text
 
-Inline text within paragraphs. More economical than wrapping in styled divs.
+General-purpose text component. Use for body copy, inline text, and secondary content. In S2, `Text` replaces what was `Body` and `Detail` in older Spectrum versions.
+
+```jsx
+import { Text } from '@react-spectrum/s2';
+
+<Text>Primary body text</Text>
+```
+
+For label-style uppercase text (metadata, section headers), use the `style` macro:
+
+```jsx
+<span className={style({ color: 'gray-700' })} style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+  LAST UPDATED
+</span>
+```
 
 ### Content
 
-Body content inside Card, Dialog, Popover. Automatically respects density.
+Body content inside Card, Dialog, Popover. Respects container context automatically.
+
+**Note:** `Body` and `Detail` are **not exported** from `@react-spectrum/s2`. Use `Text` for inline/body copy. Use `Heading` for titles. Use `Content` inside container components.
 
 ---
 
@@ -215,7 +210,7 @@ Key props:
     <Heading size="M">Title</Heading>
     <Button variant="primary">Action</Button>
   </Flex>
-  <Body>Content here</Body>
+  <Text>Content here</Text>
 </Flex>
 ```
 
@@ -285,7 +280,7 @@ TableView, ListView, GridList, TagGroup, ListBox, TreeView
 Dialog, DialogTrigger, AlertDialog, Popover, Tooltip, TooltipTrigger, ContextualHelp, Modal
 
 ### Content (8)
-Avatar, Badge, Card, IllustratedMessage, Image, Heading, Body, Text, Detail, Content
+Avatar, Badge, Card, IllustratedMessage, Image, Heading, Text, Content
 
 ### Status (10)
 ProgressBar, ProgressCircle, Meter, StatusLight, InlineAlert, ToastQueue, Banner
