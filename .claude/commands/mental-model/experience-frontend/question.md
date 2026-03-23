@@ -1,7 +1,7 @@
 ---
-name: frontend-question
+name: experience-frontend-question
 allowed-tools: Read, Bash, TodoWrite, Grep, Glob
-description: Answer questions about QA client architecture, React component patterns, api.js contracts, run polling, routing, Spectrum adoption, and inline CSS conventions — without making code changes. Use when asking how the client works, where things live, why a pattern exists, or what a data shape looks like.
+description: Answer questions about experience frontend architecture, React component patterns, api.js contracts, run polling, routing, Spectrum adoption, and inline CSS conventions — without making code changes. Use when asking how the client works, where things live, why a pattern exists, or what a data shape looks like.
 argument-hint: [question]
 ---
 
@@ -12,7 +12,7 @@ Answer the user's question by analyzing the QA client implementation. This is a 
 ## Variables
 
 USER_QUESTION: $1
-EXPERTISE_PATH: .claude/commands/experts/frontend/expertise.yaml
+EXPERTISE_PATH: .claude/commands/mental-model/experience-frontend/expertise.yaml
 
 ## Instructions
 

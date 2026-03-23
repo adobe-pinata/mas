@@ -30,7 +30,7 @@ Spawn a subagent to run the planning command:
 ```
 Task(
   subagent_type: "general-purpose",
-  prompt: "Run SlashCommand('/experts:adw:plan [USER_PROMPT]'). Return the path to the generated plan file."
+  prompt: "Run SlashCommand('/mental-model:adw:plan [USER_PROMPT]'). Return the path to the generated plan file."
 )
 ```
 
@@ -60,7 +60,7 @@ Spawn a subagent to run the self-improve command:
 ```
 Task(
   subagent_type: "general-purpose",
-  prompt: "Run SlashCommand('/experts:adw:self-improve true'). Return the self-improvement report."
+  prompt: "Run SlashCommand('/mental-model:adw:self-improve true'). Return the self-improvement report."
 )
 ```
 

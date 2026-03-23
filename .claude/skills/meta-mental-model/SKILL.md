@@ -1,14 +1,14 @@
 ---
-name: meta-experts
-description: Generates a complete expert set for a codebase domain. Creates expertise.yaml (living knowledge doc) plus four slash commands (plan, question, self-improve, plan_build_improve) under .claude/commands/experts/<domain>/. Use when the user says "create an expert for...", "add experts for...", or "use meta-experts to...".
+name: meta-mental-model
+description: Generates a complete mental model set for a codebase domain. Creates expertise.yaml (living knowledge doc) plus four slash commands (plan, question, self-improve, plan_build_improve) under .claude/commands/mental-model/<domain>/. Use when the user says "create an expert for...", "add experts for...", or "use meta-mental-model to...".
 allowed-tools: Read, Write, Glob, Grep, Bash, TodoWrite
 ---
 
-# Meta-Experts
+# Meta-Mental-Model
 
-Generates a full 5-file expert system for a given codebase domain, following the ADW expert pattern.
+Generates a full 5-file mental model system for a given codebase domain, following the ADW mental model pattern.
 
-**Reference example:** `.claude/commands/experts/adw/` — read all 5 files before generating anything.
+**Reference example:** `.claude/commands/mental-model/adw/` — read all 5 files before generating anything.
 
 **Templates:** `templates/` directory contains canonical skeletons for each file.
 
@@ -16,21 +16,21 @@ Generates a full 5-file expert system for a given codebase domain, following the
 
 ## Variables
 
-DOMAIN: $1          # e.g., eqa-server, eqa-client, eqa-integrations
+DOMAIN: $1          # e.g., experience-server, experience-frontend, experience-integrations
 SCOPE: $2           # plain-English description of what the expert covers
 
 ---
 
 ## Workflow
 
-### Step 1 — Load the ADW Expert Pattern
+### Step 1 — Load the ADW Mental Model Pattern
 
-Read all 5 ADW expert files as the canonical reference:
-- `.claude/commands/experts/adw/expertise.yaml`
-- `.claude/commands/experts/adw/plan.md`
-- `.claude/commands/experts/adw/question.md`
-- `.claude/commands/experts/adw/self-improve.md`
-- `.claude/commands/experts/adw/plan_build_improve.md`
+Read all 5 ADW mental model files as the canonical reference:
+- `.claude/commands/mental-model/adw/expertise.yaml`
+- `.claude/commands/mental-model/adw/plan.md`
+- `.claude/commands/mental-model/adw/question.md`
+- `.claude/commands/mental-model/adw/self-improve.md`
+- `.claude/commands/mental-model/adw/plan_build_improve.md`
 
 Also read `templates/expertise-template.yaml` and `templates/commands-template.md` for the skeleton structures.
 
@@ -52,7 +52,7 @@ Collect:
 
 ### Step 3 — Generate expertise.yaml
 
-Write `.claude/commands/experts/DOMAIN/expertise.yaml`.
+Write `.claude/commands/mental-model/DOMAIN/expertise.yaml`.
 
 Structure (adapt sections to the domain):
 ```yaml
@@ -88,40 +88,40 @@ Validate: every file path listed must actually exist (verified in Step 2).
 
 Write these files, adapted from the ADW templates but referencing DOMAIN:
 
-**`.claude/commands/experts/DOMAIN/plan.md`**
+**`.claude/commands/mental-model/DOMAIN/plan.md`**
 - Frontmatter: `name: DOMAIN-plan`, appropriate `allowed-tools`, `description`
 - Body: loads expertise.yaml for DOMAIN, then delegates to `/plan`
 
-**`.claude/commands/experts/DOMAIN/question.md`**
+**`.claude/commands/mental-model/DOMAIN/question.md`**
 - Frontmatter: `name: DOMAIN-question`, `allowed-tools: Read, Bash, TodoWrite`
 - Body: Q&A only — reads expertise, validates against codebase, answers without writing files
 
-**`.claude/commands/experts/DOMAIN/self-improve.md`**
+**`.claude/commands/mental-model/DOMAIN/self-improve.md`**
 - Frontmatter: `name: DOMAIN-self-improve`, `allowed-tools: Read, Grep, Glob, Bash, Edit, Write, TodoWrite`
 - Body: validates expertise.yaml against actual codebase, updates discrepancies, enforces ≤1000 line limit
 
-**`.claude/commands/experts/DOMAIN/plan_build_improve.md`**
+**`.claude/commands/mental-model/DOMAIN/plan_build_improve.md`**
 - Frontmatter: `name: DOMAIN-plan-build-improve`, `allowed-tools: Task, TaskOutput, TodoWrite`
 - Body: chains plan → build → self-improve as sequential subagents
 
 ### Step 5 — Validate
 
-- Confirm all 5 files exist under `.claude/commands/experts/DOMAIN/`
-- Run: `python3 -c "import yaml; yaml.safe_load(open('.claude/commands/experts/DOMAIN/expertise.yaml'))"` to validate YAML
-- Count lines: `wc -l .claude/commands/experts/DOMAIN/expertise.yaml` — must be ≤ 1000
+- Confirm all 5 files exist under `.claude/commands/mental-model/DOMAIN/`
+- Run: `python3 -c "import yaml; yaml.safe_load(open('.claude/commands/mental-model/DOMAIN/expertise.yaml'))"` to validate YAML
+- Count lines: `wc -l .claude/commands/mental-model/DOMAIN/expertise.yaml` — must be ≤ 1000
 - Print the skill registration block the user should add to their skills config
 
 ### Step 6 — Report
 
 ```
-Meta-Expert Created: DOMAIN
+Meta-Mental-Model Created: DOMAIN
 
 Files written:
-- .claude/commands/experts/DOMAIN/expertise.yaml  (N lines)
-- .claude/commands/experts/DOMAIN/plan.md
-- .claude/commands/experts/DOMAIN/question.md
-- .claude/commands/experts/DOMAIN/self-improve.md
-- .claude/commands/experts/DOMAIN/plan_build_improve.md
+- .claude/commands/mental-model/DOMAIN/expertise.yaml  (N lines)
+- .claude/commands/mental-model/DOMAIN/plan.md
+- .claude/commands/mental-model/DOMAIN/question.md
+- .claude/commands/mental-model/DOMAIN/self-improve.md
+- .claude/commands/mental-model/DOMAIN/plan_build_improve.md
 
 Expertise coverage:
 - Key files documented: N
@@ -129,11 +129,11 @@ Expertise coverage:
 - Gotchas noted: N
 
 Skills registered as:
-- /experts:DOMAIN:plan
-- /experts:DOMAIN:question
-- /experts:DOMAIN:self-improve
-- /experts:DOMAIN:plan_build_improve
-- /experts:DOMAIN:plan_build_improve (end-to-end)
+- /mental-model:DOMAIN:plan
+- /mental-model:DOMAIN:question
+- /mental-model:DOMAIN:self-improve
+- /mental-model:DOMAIN:plan_build_improve
+- /mental-model:DOMAIN:plan_build_improve (end-to-end)
 
-Next: run /experts:DOMAIN:self-improve to validate accuracy against live codebase.
+Next: run /mental-model:DOMAIN:self-improve to validate accuracy against live codebase.
 ```

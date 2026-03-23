@@ -1,14 +1,14 @@
-# Expert System Guide
+# Mental Model System Guide
 
-## What is the Expert System?
+## What is the Mental Model System?
 
-The expert system gives every Claude agent working in this codebase a verified, domain-specific mental model before it plans or builds anything. It is not documentation — it is an operational memory layer that agents load at the start of a task.
+The mental model system gives every Claude agent working in this codebase a verified, domain-specific mental model before it plans or builds anything. It is not documentation — it is an operational memory layer that agents load at the start of a task.
 
 The system has two physical parts:
 
 ### Living Knowledge Documents (expertise.yaml)
 
-Each domain has an `expertise.yaml` file at `.claude/commands/experts/<domain>/expertise.yaml`. This file is the **mental model** for that domain. It records:
+Each domain has an `expertise.yaml` file at `.claude/commands/mental-model/<domain>/expertise.yaml`. This file is the **mental model** for that domain. It records:
 
 - Exact file paths (relative to project root), verified against the real codebase
 - Real exported function names and signatures
@@ -23,11 +23,11 @@ Expertise files target 150–400 lines and are hard-capped at 1000 lines. Densit
 
 ### Four Companion Commands Per Domain
 
-Each domain also has four slash commands that consume the expertise file in different ways. The commands follow a consistent naming convention: `/experts:<domain>:<command>`.
+Each domain also has four slash commands that consume the expertise file in different ways. The commands follow a consistent naming convention: `/mental-model:<domain>:<command>`.
 
 ---
 
-## Available Expert Domains
+## Available Mental Model Domains
 
 ### adw
 
@@ -49,17 +49,17 @@ Each domain also has four slash commands that consume the expertise file in diff
 
 **Commands:**
 
-- `/experts:adw:plan` — Loads `expertise.yaml` and reads the critical ADW implementation files it references, then delegates to `/plan` with that context loaded. Ensures plans for ADW features respect workflow composition, WebSocket broadcasting, swimlane integration, and database schema. Accepts `[user_request]` as argument.
+- `/mental-model:adw:plan` — Loads `expertise.yaml` and reads the critical ADW implementation files it references, then delegates to `/plan` with that context loaded. Ensures plans for ADW features respect workflow composition, WebSocket broadcasting, swimlane integration, and database schema. Accepts `[user_request]` as argument.
 
-- `/experts:adw:question` — Read-only mode. Loads the expertise file, validates its claims against the codebase, and answers questions about ADW architecture, workflow triggers, swimlane UI, WebSocket events, orchestrator integration, and step composition. Does not write any files. Returns a direct answer with file and line references and diagrams where relevant.
+- `/mental-model:adw:question` — Read-only mode. Loads the expertise file, validates its claims against the codebase, and answers questions about ADW architecture, workflow triggers, swimlane UI, WebSocket events, orchestrator integration, and step composition. Does not write any files. Returns a direct answer with file and line references and diagrams where relevant.
 
-- `/experts:adw:self-improve` — Validates the expertise file against the actual codebase. Reads key ADW files, runs Grep to verify function names, checks line numbers and file paths, identifies discrepancies, updates the expertise file, enforces the 1000-line limit (trimming least-critical content if needed), and validates YAML syntax. Accepts `[check_git_diff (true/false)]` and `[focus_area]` arguments.
+- `/mental-model:adw:self-improve` — Validates the expertise file against the actual codebase. Reads key ADW files, runs Grep to verify function names, checks line numbers and file paths, identifies discrepancies, updates the expertise file, enforces the 1000-line limit (trimming least-critical content if needed), and validates YAML syntax. Accepts `[check_git_diff (true/false)]` and `[focus_area]` arguments.
 
-- `/experts:adw:plan_build_improve` — End-to-end workflow. Spawns three sequential subagents: (1) runs `/experts:adw:plan` to produce a spec file, (2) runs `/build` against that spec, (3) runs `/experts:adw:self-improve true` to sync expertise with the changes made. Each subagent starts with full context. Returns a combined report of all three steps.
+- `/mental-model:adw:plan_build_improve` — End-to-end workflow. Spawns three sequential subagents: (1) runs `/mental-model:adw:plan` to produce a spec file, (2) runs `/build` against that spec, (3) runs `/mental-model:adw:self-improve true` to sync expertise with the changes made. Each subagent starts with full context. Returns a combined report of all three steps.
 
 ---
 
-### qa-server
+### experience-server
 
 **Scope:** Adobe App Builder (AIO Runtime / OpenWhisk) serverless backend for the QA platform. Covers the six HTTP action handlers, twelve service modules, three-layer storage abstraction, geo-orchestration with K8s dispatch, run lifecycle, cron scheduling, and webhook intake.
 
@@ -76,13 +76,13 @@ Each domain also has four slash commands that consume the expertise file in diff
 
 **Commands:**
 
-- `/experts:qa-server:plan` — Accepts an optional `[prior_spec_path]` as a second argument. If provided, reads the upstream spec first (treating it as a contract for data shapes and API surfaces). Then loads the expertise file, reads relevant source files, and delegates to `/plan`. Ensures plans respect AIO Runtime patterns, three-layer storage conventions, fire-and-forget run execution, and all documented gotchas.
+- `/mental-model:experience-server:plan` — Accepts an optional `[prior_spec_path]` as a second argument. If provided, reads the upstream spec first (treating it as a contract for data shapes and API surfaces). Then loads the expertise file, reads relevant source files, and delegates to `/plan`. Ensures plans respect AIO Runtime patterns, three-layer storage conventions, fire-and-forget run execution, and all documented gotchas.
 
-- `/experts:qa-server:question` — Read-only mode. Loads the expertise file, identifies the relevant sections, reads the source files for validation, and answers questions about QA server architecture, action patterns, service contracts, data shapes, and integration points. Returns a direct answer with file references and diagrams.
+- `/mental-model:experience-server:question` — Read-only mode. Loads the expertise file, identifies the relevant sections, reads the source files for validation, and answers questions about QA server architecture, action patterns, service contracts, data shapes, and integration points. Returns a direct answer with file references and diagrams.
 
-- `/experts:qa-server:self-improve` — Validates the expertise file against the codebase by reading every listed file and running Grep for all documented function names across all twelve services and six actions. Detects new env var names, new KV key patterns, changed function signatures, and removed features. Updates, trims, and YAML-validates the expertise file. Accepts `[check_git_diff]` and `[focus_area]`.
+- `/mental-model:experience-server:self-improve` — Validates the expertise file against the codebase by reading every listed file and running Grep for all documented function names across all twelve services and six actions. Detects new env var names, new KV key patterns, changed function signatures, and removed features. Updates, trims, and YAML-validates the expertise file. Accepts `[check_git_diff]` and `[focus_area]`.
 
-- `/experts:qa-server:plan_build_improve` — End-to-end workflow. Chains `/experts:qa-server:plan` → `/implement` → `/experts:qa-server:self-improve true` as sequential subagents. Returns a combined report of all three steps.
+- `/mental-model:experience-server:plan_build_improve` — End-to-end workflow. Chains `/mental-model:experience-server:plan` → `/implement` → `/mental-model:experience-server:self-improve true` as sequential subagents. Returns a combined report of all three steps.
 
 ---
 
@@ -104,17 +104,17 @@ Each domain also has four slash commands that consume the expertise file in diff
 
 **Commands:**
 
-- `/experts:frontend:plan` — Accepts an optional `[prior_spec_path]`. If set, reads the upstream spec first (typically from a qa-server plan) to extract server API shapes that the client must consume. Then loads the expertise file, reads the relevant source files, and delegates to `/plan`. Ensures plans respect inline CSS conventions, polling patterns, Spectrum adoption rules, and no-Redux constraint.
+- `/mental-model:experience-frontend:plan` — Accepts an optional `[prior_spec_path]`. If set, reads the upstream spec first (typically from an experience-server plan) to extract server API shapes that the client must consume. Then loads the expertise file, reads the relevant source files, and delegates to `/plan`. Ensures plans respect inline CSS conventions, polling patterns, Spectrum adoption rules, and no-Redux constraint.
 
-- `/experts:frontend:question` — Read-only mode. Loads the expertise file, reads relevant source files, and answers questions about React component patterns, api.js contracts, run polling, routing, Spectrum adoption, and inline CSS. Returns a direct answer with file references and diagrams.
+- `/mental-model:experience-frontend:question` — Read-only mode. Loads the expertise file, reads relevant source files, and answers questions about React component patterns, api.js contracts, run polling, routing, Spectrum adoption, and inline CSS. Returns a direct answer with file references and diagrams.
 
-- `/experts:frontend:self-improve` — Validates the expertise file by reading all listed files and running Grep for all documented function names, prop shapes, and constants (including `xqa_conversation_id` session key, `TERMINAL_STATUSES` set membership, api.js exports). Fixes discrepancies, enforces 1000-line limit, and validates YAML syntax. Accepts `[check_git_diff]` and `[focus_area]` (e.g., `components`, `api`, `pages`).
+- `/mental-model:experience-frontend:self-improve` — Validates the expertise file by reading all listed files and running Grep for all documented function names, prop shapes, and constants (including `xqa_conversation_id` session key, `TERMINAL_STATUSES` set membership, api.js exports). Fixes discrepancies, enforces 1000-line limit, and validates YAML syntax. Accepts `[check_git_diff]` and `[focus_area]` (e.g., `components`, `api`, `pages`).
 
-- `/experts:frontend:plan_build_improve` — End-to-end workflow. Chains `/experts:frontend:plan` → `/implement` → `/experts:frontend:self-improve true` as sequential subagents. Returns a combined report of all three steps.
+- `/mental-model:experience-frontend:plan_build_improve` — End-to-end workflow. Chains `/mental-model:experience-frontend:plan` → `/implement` → `/mental-model:experience-frontend:self-improve true` as sequential subagents. Returns a combined report of all three steps.
 
 ---
 
-### qa-integrations
+### experience-integrations
 
 **Scope:** Server-only external service integrations for the QA platform — never called directly from the client. Covers WCS/AOS price APIs, OSI mapping, Adobe I/O Events signature verification, AEM webhook handling, Jira issue creation, and Slack Block Kit notifications.
 
@@ -132,13 +132,13 @@ Each domain also has four slash commands that consume the expertise file in diff
 
 **Commands:**
 
-- `/experts:qa-integrations:plan` — Accepts an optional `[prior_spec_path]`. If set, reads the upstream spec as a contract before loading expertise. Then reads the expertise file and the relevant integration source files, surfaces applicable gotchas (especially OSI vs offerId confusion and env var naming issues), and delegates to `/plan`.
+- `/mental-model:experience-integrations:plan` — Accepts an optional `[prior_spec_path]`. If set, reads the upstream spec as a contract before loading expertise. Then reads the expertise file and the relevant integration source files, surfaces applicable gotchas (especially OSI vs offerId confusion and env var naming issues), and delegates to `/plan`.
 
-- `/experts:qa-integrations:question` — Read-only mode. Loads the expertise file and reads the seven integration source files to validate claims. Answers questions about WCS/AOS price pipeline, OSI mapping, Adobe I/O webhook flow, Jira ticket creation, Slack notifications, env var requirements, and caller contracts.
+- `/mental-model:experience-integrations:question` — Read-only mode. Loads the expertise file and reads the seven integration source files to validate claims. Answers questions about WCS/AOS price pipeline, OSI mapping, Adobe I/O webhook flow, Jira ticket creation, Slack notifications, env var requirements, and caller contracts.
 
-- `/experts:qa-integrations:self-improve` — Validates the expertise file by reading every listed integration file and running Grep for all documented function names. Verifies env var names against actual `process.env` reads in the code. Checks caller relationships, data shapes, and `app.config.yaml` settings. Fixes discrepancies, enforces 1000-line limit, validates YAML. Accepts `[check_git_diff]` and `[focus_area]` (e.g., `jira`, `webhooks`, `wcs`).
+- `/mental-model:experience-integrations:self-improve` — Validates the expertise file by reading every listed integration file and running Grep for all documented function names. Verifies env var names against actual `process.env` reads in the code. Checks caller relationships, data shapes, and `app.config.yaml` settings. Fixes discrepancies, enforces 1000-line limit, validates YAML. Accepts `[check_git_diff]` and `[focus_area]` (e.g., `jira`, `webhooks`, `wcs`).
 
-- `/experts:qa-integrations:plan_build_improve` — End-to-end workflow. Chains `/experts:qa-integrations:plan` → `/implement` → `/experts:qa-integrations:self-improve true` as sequential subagents. Returns a combined report of all three steps.
+- `/mental-model:experience-integrations:plan_build_improve` — End-to-end workflow. Chains `/mental-model:experience-integrations:plan` → `/implement` → `/mental-model:experience-integrations:self-improve true` as sequential subagents. Returns a combined report of all three steps.
 
 ---
 
@@ -159,7 +159,7 @@ best_practices    — verified patterns from actual code
 key_file_locations — quick-reference flat index of the most important files
 ```
 
-Not every domain uses every section. The `adw` domain adds `workflow_types`, `composability`, `websocket_events`, `frontend_integration`, `database_schema`, and `execution_flow`. The `qa-integrations` domain adds `env_vars`. Sections are adapted to what the domain actually needs; the template defines the vocabulary, not a rigid schema.
+Not every domain uses every section. The `adw` domain adds `workflow_types`, `composability`, `websocket_events`, `frontend_integration`, `database_schema`, and `execution_flow`. The `experience-integrations` domain adds `env_vars`. Sections are adapted to what the domain actually needs; the template defines the vocabulary, not a rigid schema.
 
 ### How Agents Consume Expertise Files During Planning
 
@@ -169,7 +169,7 @@ When a `plan` command runs, it follows a two-step Higher Order Prompt (HOP) patt
 
 2. **Delegation step** — The agent calls `/plan` with the user request as the argument. Because the expertise and source files are now in context, the planning agent reasons with accurate knowledge of file paths, function signatures, patterns, and gotchas — without needing to re-explore the codebase from scratch.
 
-The `qa-server`, `frontend`, and `qa-integrations` plan commands also accept an optional `prior_spec_path` second argument. When provided, the upstream spec is read first and treated as a binding contract (data shapes, API surfaces, endpoint definitions). This enables cross-domain chaining: a qa-server plan can feed a frontend plan that consumes the same API contract.
+The `experience-server`, `experience-frontend`, and `experience-integrations` plan commands also accept an optional `prior_spec_path` second argument. When provided, the upstream spec is read first and treated as a binding contract (data shapes, API surfaces, endpoint definitions). This enables cross-domain chaining: an experience-server mental model plan can feed an experience-frontend plan that consumes the same API contract.
 
 ### The Self-Improvement Cycle
 
@@ -183,25 +183,25 @@ Expertise files are living documents. They drift from reality whenever code chan
 6. Enforces the 1000-line hard cap — if the file exceeds the limit after updates, it trims the least-critical content (verbose prose, redundant examples, low-priority edge cases) until the count is within limit
 7. Validates YAML syntax by running `python3 -c "import yaml; yaml.safe_load(...)"` and fixes any parse errors
 
-The recommended practice is to run `/experts:<domain>:self-improve` after every change to the domain's code. The `plan_build_improve` command automates this — its third subagent always runs self-improve with `check_git_diff=true` so that any changes made during the build step are immediately captured in the expertise file.
+The recommended practice is to run `/mental-model:<domain>:self-improve` after every change to the domain's code. The `plan_build_improve` command automates this — its third subagent always runs self-improve with `check_git_diff=true` so that any changes made during the build step are immediately captured in the expertise file.
 
 ---
 
-## Creating New Expert Domains
+## Creating New Mental Model Domains
 
-### Using the meta-experts Skill
+### Using the meta-mental-model Skill
 
-New expert domains are generated by the `meta-experts` skill at `.claude/skills/meta-experts/SKILL.md`. Invoke it by telling Claude: "create an expert for...", "add experts for...", or "use meta-experts to...".
+New mental model domains are generated by the `meta-mental-model` skill at `.claude/skills/meta-mental-model/SKILL.md`. Invoke it by telling Claude: "create a mental model for...", "add mental models for...", or "use meta-mental-model to...".
 
 The skill takes two variables:
-- `DOMAIN` — the domain identifier used in file paths and command names (e.g., `eqa-server`, `adw`)
-- `SCOPE` — a plain-English description of what the expert covers
+- `DOMAIN` — the domain identifier used in file paths and command names (e.g., `experience-server`, `adw`)
+- `SCOPE` — a plain-English description of what the mental model covers
 
 It uses the `adw` domain as the canonical reference and the `templates/` directory for skeleton structure.
 
 ### Template Structure
 
-The skill provides two templates in `.claude/skills/meta-experts/templates/`:
+The skill provides two templates in `.claude/skills/meta-mental-model/templates/`:
 
 **`expertise-template.yaml`** — The skeleton for the expertise file. Placeholder tokens like `{{DOMAIN}}`, `{{TAGLINE}}`, `{{ONE_SENTENCE_DESCRIPTION}}`, and `{{GOTCHA_1}}` are replaced with real content discovered from the codebase. The template's section order is the canonical order.
 
@@ -213,9 +213,9 @@ The skill provides two templates in `.claude/skills/meta-experts/templates/`:
 
 **Step 2 — Explore the codebase for the domain.** Uses Glob and Grep to discover actual files, exported function names, data shapes, architectural patterns, integration points, and known gotchas for the given SCOPE. Nothing is invented — only what exists is documented.
 
-**Step 3 — Generate expertise.yaml.** Writes `.claude/commands/experts/<DOMAIN>/expertise.yaml`. Every file path listed must have been verified in Step 2. Target is 150–400 lines.
+**Step 3 — Generate expertise.yaml.** Writes `.claude/commands/mental-model/<DOMAIN>/expertise.yaml`. Every file path listed must have been verified in Step 2. Target is 150–400 lines.
 
-**Step 4 — Generate the four command files.** Writes `plan.md`, `question.md`, `self-improve.md`, and `plan_build_improve.md` under `.claude/commands/experts/<DOMAIN>/`, adapting the templates to reference the new domain's expertise path and relevant source areas.
+**Step 4 — Generate the four command files.** Writes `plan.md`, `question.md`, `self-improve.md`, and `plan_build_improve.md` under `.claude/commands/mental-model/<DOMAIN>/`, adapting the templates to reference the new domain's expertise path and relevant source areas.
 
 **Step 5 — Validate.** Confirms all five files exist, validates YAML syntax, checks that the line count is under 1000, and prints the skill registration block for the user to add to their skills config.
 
@@ -223,7 +223,7 @@ The skill provides two templates in `.claude/skills/meta-experts/templates/`:
 
 - **Verify every file path.** The self-improve command will fail to find undocumented functions and silently mislead future agents if paths are invented. Run the skill against a real codebase area, not a planned one.
 - **Write gotchas as concrete warnings.** The format is: wrong assumption → correct behavior → where to look. Vague warnings are ignored.
-- **Keep patterns as recipes.** Write patterns as numbered steps that an engineer can follow, not as conceptual prose. The adw `action_handler` pattern and the qa-integrations `price_validation_flow` are good models.
+- **Keep patterns as recipes.** Write patterns as numbered steps that an engineer can follow, not as conceptual prose. The adw `action_handler` pattern and the experience-integrations `price_validation_flow` are good models.
 - **Group key_files by logical area.** Flat lists are hard to scan. Group by layer (actions vs services), by feature cluster (adobe_commerce vs notifications), or by lifecycle stage (entry vs pages vs components).
 - **Run self-improve immediately after the first build.** The first generation captures the codebase at a point in time. Any changes made during the build step that follows are not reflected until self-improve runs. The `plan_build_improve` command handles this automatically.
-- **Register the domain in your skills config** using the block the skill prints at the end of Step 6. Without registration, the `/experts:<domain>:*` commands are not discoverable by name.
+- **Register the domain in your skills config** using the block the skill prints at the end of Step 6. Without registration, the `/mental-model:<domain>:*` commands are not discoverable by name.

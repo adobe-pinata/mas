@@ -1,7 +1,7 @@
 ---
-name: frontend-self-improve
+name: experience-frontend-self-improve
 allowed-tools: Read, Grep, Glob, Bash, Edit, Write, TodoWrite
-description: Validate and update the frontend expertise file against the actual codebase. Detects outdated file paths, missing functions, changed component props, new pages, and stale patterns. Run after any client page, component, or lib changes to keep expertise accurate.
+description: Validate and update the experience-frontend expertise file against the actual codebase. Detects outdated file paths, missing functions, changed component props, new pages, and stale patterns. Run after any client page, component, or lib changes to keep expertise accurate.
 argument-hint: [check_git_diff (true/false)] [focus_area (optional)]
 ---
 
@@ -13,7 +13,7 @@ Maintain the frontend expertise file's accuracy by comparing it against the actu
 
 CHECK_GIT_DIFF: $1    # default: false
 FOCUS_AREA: $2        # optional — specific area to prioritize (e.g. "components", "api", "pages")
-EXPERTISE_FILE: .claude/commands/experts/frontend/expertise.yaml
+EXPERTISE_FILE: .claude/commands/mental-model/experience-frontend/expertise.yaml
 MAX_LINES: 1000
 
 ## Instructions
@@ -64,12 +64,12 @@ MAX_LINES: 1000
    - Maintain YAML structure and formatting
 
 6. **Enforce Line Limit**
-   - Run: `wc -l .claude/commands/experts/frontend/expertise.yaml`
+   - Run: `wc -l .claude/commands/mental-model/experience-frontend/expertise.yaml`
    - If count > MAX_LINES: trim least-critical sections (verbose prose, redundant examples)
    - Repeat until count <= MAX_LINES
 
 7. **Validate YAML**
-   - Run: `python3 -c "import yaml; yaml.safe_load(open('.claude/commands/experts/frontend/expertise.yaml')); print('YAML valid')"`
+   - Run: `python3 -c "import yaml; yaml.safe_load(open('.claude/commands/mental-model/experience-frontend/expertise.yaml')); print('YAML valid')"`
    - Fix any syntax errors before reporting
 
 ## Report

@@ -1,26 +1,26 @@
 ---
-name: qa-server-plan
+name: experience-server-plan
 allowed-tools: Read, SlashCommand, TodoWrite, Grep, Glob, Bash
-description: Create implementation plans for QA server features — actions, services, storage patterns, geo-orchestration, run lifecycle, and webhook intake. Loads domain expertise before delegating to /plan to ensure AIO Runtime patterns, storage conventions, and service contracts are respected. Use when planning changes to server actions or services.
+description: Create implementation plans for experience server features — actions, services, storage patterns, geo-orchestration, run lifecycle, and webhook intake. Loads domain expertise before delegating to /plan to ensure AIO Runtime patterns, storage conventions, and service contracts are respected. Use when planning changes to server actions or services.
 argument-hint: [user_request] [prior_spec_path]
 ---
 
 # Purpose
 
-You are a Higher Order Prompt (HOP) that creates implementation plans with qa-server expertise as the primary focus. Read the qa-server expertise file and critical related files before delegating to `/plan`, ensuring the planning process is informed by deep AIO Runtime and QA backend domain knowledge.
+You are a Higher Order Prompt (HOP) that creates implementation plans with experience-server expertise as the primary focus. Read the experience-server expertise file and critical related files before delegating to `/plan`, ensuring the planning process is informed by deep AIO Runtime and QA backend domain knowledge.
 
 ## Variables
 
 USER_REQUEST: $1
 PRIOR_SPEC: $2
-EXPERTISE_FILE: .claude/commands/experts/qa-server/expertise.yaml
+EXPERTISE_FILE: .claude/commands/mental-model/experience-server/expertise.yaml
 
 ## Instructions
 
 - This is a two-step wrapper: load expertise context (and upstream spec if provided), then delegate to `/plan`
 - The expertise file is your **mental model** — treat it as authoritative but verify against the codebase
 - Let `/plan` handle the actual planning logic while you provide domain context
-- Prioritize qa-server-specific elements of the request
+- Prioritize experience-server-specific elements of the request
 
 ## Workflow
 
@@ -31,7 +31,7 @@ EXPERTISE_FILE: .claude/commands/experts/qa-server/expertise.yaml
 
 2. **Load Expertise Context**
    - Read EXPERTISE_FILE to understand architecture, key files, and patterns
-   - Focus on qa-server-specific elements relevant to USER_REQUEST:
+   - Focus on experience-server-specific elements relevant to USER_REQUEST:
      - Action handler pattern (OpenWhisk, base64 body, CORS, err.status propagation)
      - Three-layer storage (DB collections, KV keys, Blob paths)
      - Step dispatch switch in runner.js
@@ -44,7 +44,7 @@ EXPERTISE_FILE: .claude/commands/experts/qa-server/expertise.yaml
 
 3. **Execute Planning with Context**
    - Call `/plan` with USER_REQUEST as the argument
-   - Planning will now be informed by the qa-server expertise and upstream spec loaded above
+   - Planning will now be informed by the experience-server expertise and upstream spec loaded above
 
 ## Report
 

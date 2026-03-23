@@ -18,29 +18,29 @@ description: Prime context for Adobe Experience QA Platform (Agentic Catch). Loa
 - @docs/prd-experience-qa.md
 - @NAMING.md
 
-**Planning or building anything** — use the domain experts (UNIX pipe pattern):
+**Planning or building anything** — use the domain mental models (UNIX pipe pattern):
 
-| Task touches | Use expert(s) | Pipe pattern |
+| Task touches | Use mental model(s) | Pipe pattern |
 |---|---|---|
-| Server only (actions, services, storage, browser, runner) | `qa-server` | `/experts:qa-server:plan "request"` |
-| Client only (React, Spectrum, UI components) | `frontend` | `/experts:frontend:plan "request"` |
-| Integrations only (AEM, Jira, Slack, WCS, AOS) | `qa-integrations` | `/experts:qa-integrations:plan "request"` |
-| Server + Client (API + UI — most features) | `qa-server` → `frontend` | server plan first, pass it as `$2` to client plan |
-| Server + Integrations (new connector, webhook) | `qa-server` → `qa-integrations` | server plan first, pass it as `$2` to integrations plan |
+| Server only (actions, services, storage, browser, runner) | `experience-server` | `/mental-model:experience-server:plan "request"` |
+| Client only (React, Spectrum, UI components) | `experience-frontend` | `/mental-model:experience-frontend:plan "request"` |
+| Integrations only (AEM, Jira, Slack, WCS, AOS) | `experience-integrations` | `/mental-model:experience-integrations:plan "request"` |
+| Server + Client (API + UI — most features) | `experience-server` → `experience-frontend` | server plan first, pass it as `$2` to client plan |
+| Server + Integrations (new connector, webhook) | `experience-server` → `experience-integrations` | server plan first, pass it as `$2` to integrations plan |
 | All three (new geo, new run type, full feature) | all three in order | server → client → integrations, each reading prior spec |
 
-**Expert pipe pattern:**
+**Mental model pipe pattern:**
 ```
-/experts:qa-server:plan "add Peru geo"                                     → specs/qa-server-plan.md
-/experts:frontend:plan "add Peru geo" specs/qa-server-plan.md             → specs/frontend-plan.md
-/experts:qa-integrations:plan "add Peru geo" specs/qa-server-plan.md       → specs/qa-integrations-plan.md
-/implement specs/qa-integrations-plan.md
+/mental-model:experience-server:plan "add Peru geo"                                          → specs/experience-server-plan.md
+/mental-model:experience-frontend:plan "add Peru geo" specs/experience-server-plan.md        → specs/experience-frontend-plan.md
+/mental-model:experience-integrations:plan "add Peru geo" specs/experience-server-plan.md    → specs/experience-integrations-plan.md
+/implement specs/experience-integrations-plan.md
 ```
 
 **Answering a question without building:**
-- Server architecture/patterns: `/experts:qa-server:question "your question"`
-- Client architecture/patterns: `/experts:frontend:question "your question"`
-- Integration patterns: `/experts:qa-integrations:question "your question"`
+- Server architecture/patterns: `/mental-model:experience-server:question "your question"`
+- Client architecture/patterns: `/mental-model:experience-frontend:question "your question"`
+- Integration patterns: `/mental-model:experience-integrations:question "your question"`
 
 **Auditing or reviewing the spec:**
 - @specs/experience-qa-platform-build.md (full spec with current status annotations)

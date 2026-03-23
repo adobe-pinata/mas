@@ -3,7 +3,7 @@
 #
 # USAGE: This file is the mental model for all {{DOMAIN}}-related tasks.
 # Every file path, function name, and pattern must be verified against the real codebase.
-# Run /experts:{{DOMAIN}}:self-improve after any {{DOMAIN}} changes to keep it current.
+# Run /mental-model:{{DOMAIN}}:self-improve after any {{DOMAIN}} changes to keep it current.
 
 overview:
   description: "{{ONE_SENTENCE_DESCRIPTION}}"

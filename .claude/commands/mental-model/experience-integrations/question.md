@@ -1,7 +1,7 @@
 ---
-name: qa-integrations-question
+name: experience-integrations-question
 allowed-tools: Read, Bash, TodoWrite, Grep, Glob
-description: Answer questions about QA integration architecture — WCS/AOS price pipeline, OSI mapping, Adobe I/O webhook flow, Jira ticket creation, Slack notifications, env var requirements, and caller contracts — without making code changes. Use when asking how an integration works, where things live, or why a pattern exists.
+description: Answer questions about experience integration architecture — WCS/AOS price pipeline, OSI mapping, Adobe I/O webhook flow, Jira ticket creation, Slack notifications, env var requirements, and caller contracts — without making code changes. Use when asking how an integration works, where things live, or why a pattern exists.
 argument-hint: [question]
 ---
 
@@ -12,7 +12,7 @@ Answer the user's question by analyzing the QA integrations implementation. This
 ## Variables
 
 USER_QUESTION: $1
-EXPERTISE_PATH: .claude/commands/experts/qa-integrations/expertise.yaml
+EXPERTISE_PATH: .claude/commands/mental-model/experience-integrations/expertise.yaml
 
 ## Instructions
 

@@ -12,7 +12,7 @@ You are operating a Higher Order Prompt (HOP) that creates implementation plans 
 ## Variables
 
 USER_REQUEST: $1
-EXPERTISE_FILE: .claude/commands/experts/adw/expertise.yaml
+EXPERTISE_FILE: .claude/commands/mental-model/adw/expertise.yaml
 
 ## Instructions
 

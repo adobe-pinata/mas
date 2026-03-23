@@ -1,13 +1,13 @@
 ---
-name: qa-server-plan-build-improve
+name: experience-integrations-plan-build-improve
 allowed-tools: Task, TaskOutput, TodoWrite
-description: End-to-end qa-server implementation workflow. Chains expertise-informed planning → code build → expertise self-improvement. Use for complete feature development in server actions, services, storage patterns, or geo-orchestration.
+description: End-to-end experience-integrations implementation workflow. Chains expertise-informed planning → code build → expertise self-improvement. Use for complete feature development in WCS/AOS pricing, OSI mapping, Adobe I/O webhooks, Jira ticket creation, or Slack notifications.
 argument-hint: [implementation_request] [human_in_the_loop (bool)]
 ---
 
 # Purpose
 
-Orchestrates a complete qa-server implementation cycle by chaining three specialized commands: expertise-informed planning, building from the plan, and self-improving the expertise based on changes made.
+Orchestrates a complete QA integrations implementation cycle by chaining three specialized commands: expertise-informed planning, building from the plan, and self-improving the expertise based on changes made.
 
 ## Variables
 
@@ -28,7 +28,7 @@ HUMAN_IN_THE_LOOP: $2    # default: true
 ```
 Task(
   subagent_type: "general-purpose",
-  prompt: "Run SlashCommand('/experts:qa-server:plan [USER_PROMPT]'). Return the path to the generated plan file."
+  prompt: "Run SlashCommand('/mental-model:experience-integrations:plan [USER_PROMPT]'). Return the path to the generated plan file."
 )
 ```
 
@@ -54,7 +54,7 @@ Use TaskOutput to get `build_report` before proceeding.
 ```
 Task(
   subagent_type: "general-purpose",
-  prompt: "Run SlashCommand('/experts:qa-server:self-improve true'). Return the self-improvement report."
+  prompt: "Run SlashCommand('/mental-model:experience-integrations:self-improve true'). Return the self-improvement report."
 )
 ```
 
@@ -78,4 +78,4 @@ Use TaskOutput to get `self_improve_report`.
 - [self_improve_report summary]
 
 ### Final Status
-qa-server implementation workflow complete.
+experience-integrations implementation workflow complete.

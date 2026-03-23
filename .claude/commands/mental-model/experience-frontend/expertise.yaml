@@ -3,7 +3,7 @@
 #
 # USAGE: Mental model for all frontend tasks.
 # Every file path and function name is verified against the real codebase.
-# Run /experts:frontend:self-improve after any client changes.
+# Run /mental-model:frontend:self-improve after any client changes.
 
 overview:
   description: "React 18 SPA (Vite) that drives the QA platform chat-to-run workflow: chat with AI to generate test plans, review and edit plans inline, launch multi-geo runs, and browse history — all consuming the AIO Runtime serverless backend via lib/api.js."

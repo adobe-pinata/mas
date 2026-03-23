@@ -1,4 +1,4 @@
-# Command File Templates for Expert System
+# Command File Templates for Mental Model System
 #
 # Replace {{DOMAIN}}, {{SCOPE}}, {{EXPERTISE_PATH}}, and {{ALLOWED_TOOLS}}
 # for each generated command file.
@@ -58,7 +58,7 @@ description: Answer questions about {{SCOPE}} — architecture, patterns, key fi
 argument-hint: [question]
 ---
 
-# {{DOMAIN}} Expert — Question Mode
+# {{DOMAIN}} Mental Model — Question Mode
 
 Answer the user's question by analyzing the {{DOMAIN}} implementation. This is a read-only mode: DO NOT write, edit, or create any files.
 
@@ -207,7 +207,7 @@ HUMAN_IN_THE_LOOP: $2    # default: true
 ```
 Task(
   subagent_type: "general-purpose",
-  prompt: "Run SlashCommand('/experts:{{DOMAIN}}:plan [USER_PROMPT]'). Return the path to the generated plan file."
+  prompt: "Run SlashCommand('/mental-model:{{DOMAIN}}:plan [USER_PROMPT]'). Return the path to the generated plan file."
 )
 ```
 
@@ -229,7 +229,7 @@ Use TaskOutput to get `build_report` before proceeding.
 ```
 Task(
   subagent_type: "general-purpose",
-  prompt: "Run SlashCommand('/experts:{{DOMAIN}}:self-improve true'). Return the self-improvement report."
+  prompt: "Run SlashCommand('/mental-model:{{DOMAIN}}:self-improve true'). Return the self-improvement report."
 )
 ```
 

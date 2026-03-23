@@ -1,19 +1,19 @@
 ---
-name: qa-server-self-improve
+name: experience-server-self-improve
 allowed-tools: Read, Grep, Glob, Bash, Edit, Write, TodoWrite
-description: Validate and update the qa-server expertise file against the actual codebase. Detects outdated file paths, missing functions, changed patterns, and new files. Run after any server action or service changes to keep expertise accurate.
+description: Validate and update the experience-server expertise file against the actual codebase. Detects outdated file paths, missing functions, changed patterns, and new files. Run after any server action or service changes to keep expertise accurate.
 argument-hint: [check_git_diff (true/false)] [focus_area (optional)]
 ---
 
 # Purpose
 
-Maintain the qa-server expertise file's accuracy by comparing it against the actual codebase. The expertise file is the **mental model** for all qa-server tasks — it must reflect reality, not aspirations.
+Maintain the experience-server expertise file's accuracy by comparing it against the actual codebase. The expertise file is the **mental model** for all qa-server tasks — it must reflect reality, not aspirations.
 
 ## Variables
 
 CHECK_GIT_DIFF: $1    # default: false
 FOCUS_AREA: $2        # optional — specific area to prioritize
-EXPERTISE_FILE: .claude/commands/experts/qa-server/expertise.yaml
+EXPERTISE_FILE: .claude/commands/mental-model/experience-server/expertise.yaml
 MAX_LINES: 1000
 
 ## Workflow
@@ -62,12 +62,12 @@ MAX_LINES: 1000
    - Maintain YAML structure
 
 6. **Enforce Line Limit**
-   - Run: `wc -l .claude/commands/experts/qa-server/expertise.yaml`
+   - Run: `wc -l .claude/commands/mental-model/experience-server/expertise.yaml`
    - If count > MAX_LINES: trim least-critical sections (verbose prose, redundant examples)
    - Repeat until ≤ MAX_LINES
 
 7. **Validate YAML**
-   - Run: `python3 -c "import yaml; yaml.safe_load(open('.claude/commands/experts/qa-server/expertise.yaml')); print('YAML valid')"`
+   - Run: `python3 -c "import yaml; yaml.safe_load(open('.claude/commands/mental-model/experience-server/expertise.yaml')); print('YAML valid')"`
    - Fix any syntax errors
 
 ## Report

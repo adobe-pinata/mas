@@ -5,14 +5,14 @@ description: Answer questions about Developer Workflows (ADW) architecture, work
 argument-hint: [question]
 ---
 
-# ADW Expert - Question Mode
+# ADW Mental Model - Question Mode
 
 Answer the user's question by analyzing Developer Workflow implementation, architecture, and patterns in this multi-agent orchestration system. This prompt is designed to provide information about ADWs without making any code changes.
 
 ## Variables
 
 USER_QUESTION: $1
-EXPERTISE_PATH: .claude/commands/experts/adw/expertise.yaml
+EXPERTISE_PATH: .claude/commands/mental-model/adw/expertise.yaml
 
 ## Instructions
 

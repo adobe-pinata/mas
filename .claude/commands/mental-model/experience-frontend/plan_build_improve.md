@@ -1,13 +1,13 @@
 ---
-name: qa-integrations-plan-build-improve
+name: experience-frontend-plan-build-improve
 allowed-tools: Task, TaskOutput, TodoWrite
-description: End-to-end QA integrations implementation workflow. Chains expertise-informed planning → code build → expertise self-improvement. Use for complete feature development in WCS/AOS pricing, OSI mapping, Adobe I/O webhooks, Jira ticket creation, or Slack notifications.
+description: End-to-end experience-frontend implementation workflow. Chains expertise-informed planning → code build → expertise self-improvement. Use for complete feature development in client pages, components, api.js extensions, or routing changes.
 argument-hint: [implementation_request] [human_in_the_loop (bool)]
 ---
 
 # Purpose
 
-Orchestrates a complete QA integrations implementation cycle by chaining three specialized commands: expertise-informed planning, building from the plan, and self-improving the expertise based on changes made.
+Orchestrates a complete frontend implementation cycle by chaining three specialized commands: expertise-informed planning, building from the plan, and self-improving the expertise based on changes made.
 
 ## Variables
 
@@ -25,10 +25,12 @@ HUMAN_IN_THE_LOOP: $2    # default: true
 
 ### Step 1: Create Plan
 
+Spawn a subagent to run the planning command:
+
 ```
 Task(
   subagent_type: "general-purpose",
-  prompt: "Run SlashCommand('/experts:qa-integrations:plan [USER_PROMPT]'). Return the path to the generated plan file."
+  prompt: "Run SlashCommand('/mental-model:experience-frontend:plan [USER_PROMPT]'). Return the path to the generated plan file."
 )
 ```
 
@@ -37,6 +39,8 @@ Replace `[USER_PROMPT]` with the actual user request.
 Use TaskOutput to get `path_to_plan` before proceeding.
 
 ### Step 2: Build
+
+Spawn a subagent to run the build command:
 
 ```
 Task(
@@ -51,16 +55,20 @@ Use TaskOutput to get `build_report` before proceeding.
 
 ### Step 3: Self-Improve
 
+Spawn a subagent to run the self-improve command:
+
 ```
 Task(
   subagent_type: "general-purpose",
-  prompt: "Run SlashCommand('/experts:qa-integrations:self-improve true'). Return the self-improvement report."
+  prompt: "Run SlashCommand('/mental-model:experience-frontend:self-improve true'). Return the self-improvement report."
 )
 ```
 
 Use TaskOutput to get `self_improve_report`.
 
 ### Step 4: Report
+
+Compile the final report from all three steps.
 
 ## Report
 
@@ -78,4 +86,4 @@ Use TaskOutput to get `self_improve_report`.
 - [self_improve_report summary]
 
 ### Final Status
-qa-integrations implementation workflow complete.
+experience-frontend implementation workflow complete.

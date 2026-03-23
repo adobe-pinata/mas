@@ -1,7 +1,7 @@
 ---
-name: qa-integrations-plan
+name: experience-integrations-plan
 allowed-tools: Read, SlashCommand, TodoWrite, Grep, Glob, Bash
-description: Create implementation plans for QA integrations (WCS, AOS, OSI mapping, Adobe I/O, webhooks, Jira, Slack). Loads integration expertise before delegating to /plan to ensure correct env var names, data shapes, and caller contracts are respected. Use when planning changes to any external integration.
+description: Create implementation plans for experience integrations (WCS, AOS, OSI mapping, Adobe I/O, webhooks, Jira, Slack). Loads integration expertise before delegating to /plan to ensure correct env var names, data shapes, and caller contracts are respected. Use when planning changes to any external integration.
 argument-hint: [user_request] [prior_spec_path]
 ---
 
@@ -13,7 +13,7 @@ You are a Higher Order Prompt (HOP) that creates implementation plans with QA in
 
 USER_REQUEST: $1
 PRIOR_SPEC: $2
-EXPERTISE_FILE: .claude/commands/experts/qa-integrations/expertise.yaml
+EXPERTISE_FILE: .claude/commands/mental-model/experience-integrations/expertise.yaml
 
 ## Instructions
 

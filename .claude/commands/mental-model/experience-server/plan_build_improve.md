@@ -1,13 +1,13 @@
 ---
-name: frontend-plan-build-improve
+name: experience-server-plan-build-improve
 allowed-tools: Task, TaskOutput, TodoWrite
-description: End-to-end frontend implementation workflow. Chains expertise-informed planning → code build → expertise self-improvement. Use for complete feature development in client pages, components, api.js extensions, or routing changes.
+description: End-to-end experience-server implementation workflow. Chains expertise-informed planning → code build → expertise self-improvement. Use for complete feature development in server actions, services, storage patterns, or geo-orchestration.
 argument-hint: [implementation_request] [human_in_the_loop (bool)]
 ---
 
 # Purpose
 
-Orchestrates a complete frontend implementation cycle by chaining three specialized commands: expertise-informed planning, building from the plan, and self-improving the expertise based on changes made.
+Orchestrates a complete qa-server implementation cycle by chaining three specialized commands: expertise-informed planning, building from the plan, and self-improving the expertise based on changes made.
 
 ## Variables
 
@@ -25,12 +25,10 @@ HUMAN_IN_THE_LOOP: $2    # default: true
 
 ### Step 1: Create Plan
 
-Spawn a subagent to run the planning command:
-
 ```
 Task(
   subagent_type: "general-purpose",
-  prompt: "Run SlashCommand('/experts:frontend:plan [USER_PROMPT]'). Return the path to the generated plan file."
+  prompt: "Run SlashCommand('/mental-model:experience-server:plan [USER_PROMPT]'). Return the path to the generated plan file."
 )
 ```
 
@@ -39,8 +37,6 @@ Replace `[USER_PROMPT]` with the actual user request.
 Use TaskOutput to get `path_to_plan` before proceeding.
 
 ### Step 2: Build
-
-Spawn a subagent to run the build command:
 
 ```
 Task(
@@ -55,20 +51,16 @@ Use TaskOutput to get `build_report` before proceeding.
 
 ### Step 3: Self-Improve
 
-Spawn a subagent to run the self-improve command:
-
 ```
 Task(
   subagent_type: "general-purpose",
-  prompt: "Run SlashCommand('/experts:frontend:self-improve true'). Return the self-improvement report."
+  prompt: "Run SlashCommand('/mental-model:experience-server:self-improve true'). Return the self-improvement report."
 )
 ```
 
 Use TaskOutput to get `self_improve_report`.
 
 ### Step 4: Report
-
-Compile the final report from all three steps.
 
 ## Report
 
@@ -86,4 +78,4 @@ Compile the final report from all three steps.
 - [self_improve_report summary]
 
 ### Final Status
-frontend implementation workflow complete.
+experience-server implementation workflow complete.

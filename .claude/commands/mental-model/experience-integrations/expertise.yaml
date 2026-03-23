@@ -3,7 +3,7 @@
 #
 # USAGE: Mental model for all qa-integrations tasks.
 # Every file path and function name is verified against the real codebase.
-# Run /experts:qa-integrations:self-improve after any integration changes.
+# Run /mental-model:qa-integrations:self-improve after any integration changes.
 
 overview:
   description: "Server-only external integrations that drive pricing validation (WCS/AOS/OSI), platform event ingestion (Adobe I/O/webhooks), and failure notification (Jira/Slack) — never called directly from the client."

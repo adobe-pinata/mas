@@ -3,7 +3,7 @@
 #
 # USAGE: Mental model for all qa-server tasks.
 # Every file path and function name is verified against the real codebase.
-# Run /experts:qa-server:self-improve after any server changes.
+# Run /mental-model:qa-server:self-improve after any server changes.
 
 overview:
   description: "Adobe App Builder (AIO Runtime/OpenWhisk) serverless backend that drives the full QA lifecycle: chat-to-plan generation, multi-geo run execution, cron scheduling, and webhook intake."

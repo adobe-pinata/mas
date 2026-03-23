@@ -13,7 +13,7 @@ You maintain the ADW expert system's expertise accuracy by comparing the existin
 
 CHECK_GIT_DIFF: $1 default to false if not specified
 FOCUS_AREA: $2 default to empty string
-EXPERTISE_FILE: .claude/commands/experts/adw/expertise.yaml
+EXPERTISE_FILE: .claude/commands/mental-model/adw/expertise.yaml
 MAX_LINES: 1000
 
 ## Instructions
@@ -82,7 +82,7 @@ MAX_LINES: 1000
    - Keep descriptions concise and actionable
 
 6. **Enforce Line Limit**
-   - Run: `wc -l .claude/commands/experts/adw/expertise.yaml`
+   - Run: `wc -l .claude/commands/mental-model/adw/expertise.yaml`
    - Check if line count exceeds MAX_LINES (1000)
    - If line count > MAX_LINES:
      - Identify least important expertise sections that won't impact expert performance:

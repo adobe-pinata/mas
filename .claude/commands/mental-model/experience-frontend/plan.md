@@ -1,7 +1,7 @@
 ---
-name: frontend-plan
+name: experience-frontend-plan
 allowed-tools: Read, SlashCommand, TodoWrite, Grep, Glob, Bash
-description: Create implementation plans for QA client features — chat UI, run progress, history page, settings form, api.js extensions, and routing changes. Loads domain expertise before delegating to /plan to ensure React patterns, inline CSS conventions, polling patterns, and Spectrum adoption rules are respected. Use when planning changes to client pages, components, or lib files.
+description: Create implementation plans for experience frontend features — chat UI, run progress, history page, settings form, api.js extensions, and routing changes. Loads domain expertise before delegating to /plan to ensure React patterns, inline CSS conventions, polling patterns, and Spectrum adoption rules are respected. Use when planning changes to client pages, components, or lib files.
 argument-hint: [user_request] [prior_spec_path]
 ---
 
@@ -13,12 +13,12 @@ You are a Higher Order Prompt (HOP) that creates implementation plans with front
 
 USER_REQUEST: $1
 PRIOR_SPEC: $2
-EXPERTISE_FILE: .claude/commands/experts/frontend/expertise.yaml
+EXPERTISE_FILE: .claude/commands/mental-model/experience-frontend/expertise.yaml
 
 ## Instructions
 
 - This is a two-step wrapper: load expertise context, then delegate to `/plan`
-- If PRIOR_SPEC is set, read it FIRST as the upstream contract before loading expertise — this ensures server API contracts defined by qa-server plans are respected
+- If PRIOR_SPEC is set, read it FIRST as the upstream contract before loading expertise — this ensures server API contracts defined by experience-server plans are respected
 - The expertise file is your **mental model** — treat it as authoritative but verify against the codebase
 - Let `/plan` handle the actual planning logic while you provide domain context
 - Prioritize frontend-specific elements of the request

@@ -1,7 +1,7 @@
 ---
-name: qa-integrations-self-improve
+name: experience-integrations-self-improve
 allowed-tools: Read, Grep, Glob, Bash, Edit, Write, TodoWrite
-description: Validate and update the QA integrations expertise file against the actual codebase. Detects outdated env var names, missing functions, changed data shapes, new integration files, and stale caller contracts. Run after any change to wcs.js, aos.js, osi-mapping.js, adobe-io.js, jira.js, slack.js, or the webhooks action.
+description: Validate and update the experience-integrations expertise file against the actual codebase. Detects outdated env var names, missing functions, changed data shapes, new integration files, and stale caller contracts. Run after any change to wcs.js, aos.js, osi-mapping.js, adobe-io.js, jira.js, slack.js, or the webhooks action.
 argument-hint: [check_git_diff (true/false)] [focus_area (optional)]
 ---
 
@@ -13,7 +13,7 @@ Maintain the QA integrations expertise file's accuracy by comparing it against t
 
 CHECK_GIT_DIFF: $1    # default: false
 FOCUS_AREA: $2        # optional — e.g. 'jira', 'webhooks', 'wcs'
-EXPERTISE_FILE: .claude/commands/experts/qa-integrations/expertise.yaml
+EXPERTISE_FILE: .claude/commands/mental-model/experience-integrations/expertise.yaml
 MAX_LINES: 1000
 
 ## Workflow
@@ -57,12 +57,12 @@ MAX_LINES: 1000
    - Maintain YAML structure and formatting
 
 6. **Enforce Line Limit**
-   - Run: `wc -l .claude/commands/experts/qa-integrations/expertise.yaml`
+   - Run: `wc -l .claude/commands/mental-model/experience-integrations/expertise.yaml`
    - If count > MAX_LINES: trim least-critical sections (verbose prose, redundant examples)
    - Repeat until <= MAX_LINES
 
 7. **Validate YAML**
-   - Run: `python3 -c "import yaml; yaml.safe_load(open('.claude/commands/experts/qa-integrations/expertise.yaml')); print('YAML valid')"`
+   - Run: `python3 -c "import yaml; yaml.safe_load(open('.claude/commands/mental-model/experience-integrations/expertise.yaml')); print('YAML valid')"`
    - Fix any syntax errors and re-validate
 
 ## Report
