@@ -1,7 +1,7 @@
 {
   "env": {
-    "CLAUDE_PROJECT_DIR": "/Users/rivero/ai/experience-qa",
-    "SOURCE_APP": "experience-qa"
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "CLAUDE_HOOKS_LOG_DIR": ".logs"
   },
   "hooks": {
     "SessionStart": [
@@ -11,6 +11,10 @@
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/session_start.py --load-context"
+          },
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type SessionStart"
           }
         ]
       }
@@ -26,6 +30,10 @@
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/send_event.py --source-app $SOURCE_APP --event-type PreToolUse --summarize"
+          },
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type PreToolUse"
           }
         ]
       }
@@ -41,6 +49,10 @@
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/send_event.py --source-app $SOURCE_APP --event-type PostToolUse --summarize"
+          },
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type PostToolUse"
           }
         ]
       },
@@ -69,6 +81,10 @@
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/send_event.py --source-app $SOURCE_APP --event-type Notification --summarize"
+          },
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type Notification"
           }
         ]
       }
@@ -77,6 +93,10 @@
       {
         "matcher": "",
         "hooks": [
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type Stop"
+          },
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/stop.py"
@@ -92,6 +112,10 @@
       {
         "matcher": "",
         "hooks": [
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type SubagentStop"
+          },
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/subagent_stop.py"
@@ -110,12 +134,17 @@
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/send_event.py --source-app $SOURCE_APP --event-type PreCompact --summarize"
+          },
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type PreCompact"
           }
         ]
       }
     ],
     "UserPromptSubmit": [
       {
+        "matcher": "",
         "hooks": [
           {
             "type": "command",
@@ -124,6 +153,21 @@
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/send_event.py --source-app $SOURCE_APP --event-type UserPromptSubmit --summarize"
+          },
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type UserPromptSubmit"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type SessionEnd"
           }
         ]
       }
@@ -142,5 +186,6 @@
     ],
     "defaultMode": "bypassPermissions"
   },
-  "enableAllProjectMcpServers": true
+  "enableAllProjectMcpServers": true,
+  "teammateMode": "in-process"
 }

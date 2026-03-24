@@ -83,7 +83,7 @@ def main():
         parser.add_argument('--chat', action='store_true', help='Copy transcript to chat.json')
         parser.add_argument('--notify', action='store_true', help='Enable TTS completion announcement')
         args = parser.parse_args()
-        
+
         # Read JSON input from stdin
         input_data = json.load(sys.stdin)
 
@@ -91,7 +91,16 @@ def main():
         session_id = input_data.get("session_id", "")
         stop_hook_active = input_data.get("stop_hook_active", False)
 
-        # Ensure log directory exists
+        # Guard: if stop_hook_active is true, exit immediately to prevent
+        # infinite loops.
+        if stop_hook_active:
+            sys.exit(0)
+
+        # Legacy mutable-JSON log — predates the JSONL observability system.
+        # log_event.py (wired first in settings.json) now writes the canonical
+        # SubagentStop record to .logs/{session_id}/SubagentStop.jsonl.  This
+        # write is kept for backwards compatibility; remove once no consumers
+        # rely on logs/subagent_stop.json.
         log_dir = os.path.join(os.getcwd(), "logs")
         os.makedirs(log_dir, exist_ok=True)
         log_path = os.path.join(log_dir, "subagent_stop.json")

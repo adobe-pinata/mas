@@ -24,9 +24,12 @@ build/
 # Logs
 *.log
 npm-debug.log*
-logs/*
-!logs/.gitkeep
+
+# Hook event logs (runtime, per-session)
+logs/
 .logs/
+**/logs/
+**/.logs/
 
 # App Builder
 dist-app/
@@ -75,3 +78,4 @@ adws/.env.adw
 .ports.env
 **/__pycache__/
 *.pyc
+
