@@ -22,10 +22,10 @@ build/
 .parcel-cache/
 
 # Logs
+*.log
 logs/*
 !logs/.gitkeep
-*.log
-npm-debug.log*
+.logs/
 
 # App Builder
 dist-app/
