@@ -1,0 +1,449 @@
+# QA Server Implementation Expertise
+# Adobe Experience QA Platform — serverless AIO Runtime backend
+#
+# USAGE: Mental model for all qa-server tasks.
+# Every file path and function name is verified against the real codebase.
+# Run /mental-model:qa-server:self-improve after any server changes.
+
+overview:
+  description: "Adobe App Builder (AIO Runtime/OpenWhisk) serverless backend that drives the full QA lifecycle: chat-to-plan generation, multi-geo run execution, cron scheduling, and webhook intake."
+  core_insight: "NOT Express — actions are OpenWhisk serverless functions. Each export async function main(params) is the entry point. HTTP method and body are in params.__ow_method and params.__ow_body (base64-encoded)."
+  architecture_pattern: "Six actions (HTTP handlers) + twelve services (shared logic). Fire-and-forget run execution; client polls DB for progress."
+  value_proposition:
+    - "Chat-driven plan generation via Claude (planner.js)"
+    - "Multi-geo K8s dispatch with local sequential fallback (geo-orchestrator.js)"
+    - "Three-layer storage abstraction: DB (docs) + KV (state) + Blob (files)"
+    - "Webhook triggers from AEM ContentPublished events auto-fire QA runs"
+
+# ─── KEY FILES ───────────────────────────────────────────────────────────────
+
+key_files:
+  actions:
+    chat:
+      file: "apps/experience-qa/server/actions/chat/index.js"
+      purpose: "GET lists conversations; POST routes user message to chat.process()"
+      key_functions:
+        main: "main(params) — OpenWhisk entry point; reads __ow_method/__ow_body"
+
+    plans:
+      file: "apps/experience-qa/server/actions/plans/index.js"
+      purpose: "CRUD for test_plans collection; POST delegates to planner.parse()"
+      key_functions:
+        main: "main(params) — GET/POST/PUT/DELETE /plans and /plans/:id"
+        extractId: "extractId(owPath) — parses trailing path segment as ID"
+
+    runs:
+      file: "apps/experience-qa/server/actions/runs/index.js"
+      purpose: "Run lifecycle: list, start (single/multi-geo), get status, cancel"
+      key_functions:
+        main: "main(params) — GET/POST/DELETE; routes multi-geo to geo-orchestrator"
+        extractId: "extractId(owPath) — returns run ID from path"
+        extractSubResource: "extractSubResource(owPath) — returns 'geo-status'|'cancel'|null"
+
+    schedules:
+      file: "apps/experience-qa/server/actions/schedules/index.js"
+      purpose: "CRUD for schedules; delegates create/update/delete to scheduler service"
+      key_functions:
+        main: "main(params) — GET/POST/PUT/DELETE /schedules and /schedules/:id"
+
+    settings:
+      file: "apps/experience-qa/server/actions/settings/index.js"
+      purpose: "GET/PUT platform settings persisted to 'config:settings' KV key"
+      key_functions:
+        main: "main(params) — deep-merges partial PUT body into existing settings"
+
+    webhooks:
+      file: "apps/experience-qa/server/actions/webhooks/index.js"
+      purpose: "Receives Jira, Slack, and AEM webhook POSTs; web:'raw' in app.config.yaml"
+      key_functions:
+        main: "main(params) — dispatches to handleJiraWebhook/handleSlackWebhook/handleAEMWebhook"
+        handleAEMWebhook: "Maps AEM content path → URL, finds matching plans, fires executeRun()"
+        verifyJiraSignature: "HMAC-SHA256 vs JIRA_WEBHOOK_SECRET env var"
+        verifySlackSignature: "v0=HMAC-SHA256 vs SLACK_SIGNING_SECRET; replay-attack window 300s"
+        verifyAIOSignature: "RSA digital signature verification via adobe-io.js (NOT simple HMAC). Delegates to verifyAIOSignature(rawBody, headers)."
+
+  services:
+    storage:
+      file: "apps/experience-qa/server/services/storage.js"
+      purpose: "Three-layer adapter: in-memory/disk (dev) vs aio-lib-state/files/db (prod)"
+      key_functions:
+        init: "init() → adapter singleton; detects NODE_ENV=development"
+        seedGeos: "seedGeos() — populates geo:{GEO} KV keys + config:settings default"
+        getDoc: "getDoc(collection, id) → doc | null"
+        findDocs: "findDocs(collection, filter?) → doc[]"
+        upsertDoc: "upsertDoc(collection, id, data) → doc (sets _id + updatedAt)"
+        deleteDoc: "deleteDoc(collection, id) → void"
+        getState: "getState(key) → value | null"
+        setState: "setState(key, value, opts?) → void"
+        deleteState: "deleteState(key) → void"
+        uploadFile: "uploadFile(path, buffer, mime?) → void"
+        downloadFile: "downloadFile(path) → Buffer"
+        generatePresignURL: "generatePresignURL(path, opts?) → Promise<string> (24h default). Local adapter returns Promise.resolve(file://...); always chain with await, never call .catch() on awaited result."
+
+    browser:
+      file: "apps/experience-qa/server/services/browser.js"
+      purpose: "Playwright Chromium management: one singleton browser, one context per geo run"
+      key_functions:
+        createContext: "createContext(geo) → BrowserContext; reads geo:{GEO} KV for headers"
+        navigateTo: "navigateTo(page, url, geo) → Response; appends ?akamaiLocale=&langfirst=on; retries 403/net errors"
+        waitForCommerceReady: "waitForCommerceReady(page) — waits for mas:ready on merch-card and onceSettled on inline-price"
+        extractDOM: "extractDOM(page) → { title, text, html, links, buttons, lang }"
+        screenshot: "screenshot(page, runId, stepName) → storagePath (runs/{runId}/{stepName}.png)"
+        clickElement: "clickElement(page, selectorOrText) → newUrl; tries getByText then CSS selector"
+        close: "close() → void; shuts singleton browser on server shutdown"
+
+    oauth:
+      file: "apps/experience-qa/server/services/oauth.js"
+      purpose: "Anthropic client factory with token lifecycle management. Single export used by all Claude API callers."
+      key_functions:
+        getAnthropicClient: "getAnthropicClient() → client; returns Anthropic SDK instance (ANTHROPIC_API_KEY path) or bearerClient (oat01 token path). On cache miss, calls _readTokenFromEnvFile() to seed auth profile (not process.env.SETUP_TOKEN, which is stale after startup)."
+      patterns:
+        token_priority: "1. ANTHROPIC_API_KEY (standard SDK, never expires) → 2. SETUP_TOKEN or CLAUDE_CODE_OAUTH_TOKEN in .env (oat01, ~1h TTL)"
+        env_file_path: "ENV_FILE resolved as path.join(__dirname, '../../../../.env') — 4 levels up from services/ = project root. NOT ../../../ (that would be apps/.env which does not exist)."
+        auth_profiles: "AuthProfiles class: stores token + expiry in .tokens/auth-profiles.json. TTL = 55 min (5 min buffer before 1h Anthropic expiry)."
+        token_manager: "_readTokenFromEnvFile(): reads .env directly (not process.env) — single source of truth. No macOS Keychain read; execSync / child_process removed. Serializes concurrent refreshes via in-flight promise."
+        bearer_client: "bearerClient(token): raw fetch bypassing SDK. Uses x-api-key header — NOT Authorization: Bearer. oat01 tokens REJECT Bearer header."
+        on_401: "On 401 response: force-expire cache, call _readTokenFromEnvFile() to re-read .env, retry the request once."
+        refresh_script: "scripts/refresh-token.sh — run manually on persistent 401. Sources: CLAUDE_CODE_OAUTH_TOKEN env var → Keychain → manual paste. Validates token live, writes result to .env."
+      critical_gotcha: "oat01 tokens (sk-ant-oat01-...) MUST use x-api-key header. The Anthropic SDK's authToken option sends Authorization: Bearer which returns 401. Always use bearerClient, never new Anthropic({authToken})."
+
+    adobe_io:
+      file: "apps/experience-qa/server/services/adobe-io.js"
+      purpose: "Adobe I/O signature verification and AEM content path → URL mapping"
+      key_functions:
+        verifySignature: "verifySignature(req) → boolean; legacy HMAC-SHA256 path"
+        verifyAIOSignature: "verifyAIOSignature(rawBody, headers) → boolean; RSA digital signature using Adobe I/O public keys"
+        mapAEMPathToURL: "mapAEMPathToURL(contentPath) → string; converts /content/www/us/... to https://www.adobe.com/..."
+
+    osi_mapping:
+      file: "apps/experience-qa/server/services/osi-mapping.js"
+      purpose: "OSI (Offering System Identifier) lookup and upsert for WCS price validation"
+      key_functions:
+        lookupOSI: "lookupOSI({ product, commitment, country }) → { osi, offerId, locale } | null"
+        upsertMappings: "upsertMappings(mappings[]) → void; bulk-writes to osi_mappings collection"
+
+    wcs:
+      file: "apps/experience-qa/server/services/wcs.js"
+      purpose: "WCS (Web Commerce Service) price lookup by OSI. Returns price shape for comparison."
+      key_functions:
+        getExpectedPrice: "getExpectedPrice(osi, country, locale) → { price, currency, formatString, taxDisplay, taxTerm } | null"
+      gotcha: "price is at offer.priceDetails.price (not offer.price). currency is parsed from JSON string at offer.analytics.currencyCode."
+
+    aos:
+      file: "apps/experience-qa/server/services/aos.js"
+      purpose: "AOS (Adobe Online Store) canonical price lookup by offerId"
+      key_functions:
+        getCanonicalPrice: "getCanonicalPrice(offerId, country, locale) → canonical price object | null"
+
+    planner:
+      file: "apps/experience-qa/server/services/planner.js"
+      purpose: "Calls Claude with conversation history to generate a structured test plan or clarifying question"
+      key_functions:
+        parse: "parse(history, userMessage) → { type:'plan', plan } | { type:'question', text }; reads model from config:settings.models.planGeneration"
+
+    runner:
+      file: "apps/experience-qa/server/services/runner.js"
+      purpose: "Test execution engine: executes all plan steps for one geo, persists StepResults, fires Jira/Slack"
+      key_functions:
+        executeRun: "executeRun(runId, plan, geo) → { total, passed, failed, criticals }; checks cancelled flag between steps"
+        _executeStep: "_executeStep(page, step, plan, geo, runId, store) — switch on step.type"
+        _fireJiraTickets: "_fireJiraTickets(results, plan, geo, runId) — creates Jira issues for critical/high failures"
+
+    scheduler:
+      file: "apps/experience-qa/server/services/scheduler.js"
+      purpose: "node-cron registry: loads enabled schedules on server start, fires executeRun() per geo on tick"
+      key_functions:
+        init: "init() — loads all {enabled:true} schedules from DB, registers cron tasks"
+        addSchedule: "addSchedule(planId, cronExpr) → scheduleId; validates cron expr"
+        removeSchedule: "removeSchedule(scheduleId) → void; stops task + deletes DB record"
+        updateSchedule: "updateSchedule(scheduleId, patch) → updated doc; restarts task"
+
+    chat:
+      file: "apps/experience-qa/server/services/chat.js"
+      purpose: "Conversation persistence + routing: upserts conversation, appends messages, delegates to planner"
+      key_functions:
+        process: "process(conversationId|null, userMessage) → { type, conversationId, plan?, text? }"
+        _recentMessages: "_recentMessages(store, conversationId, limit) — sorted by sequence, returns {role, content}[]"
+        _nextSequence: "_nextSequence(store, conversationId) — max(sequence)+1"
+        _appendToRecentMessages: "_appendToRecentMessages(store, conversationId, newMessages) — bounded to 50"
+
+    price_checker:
+      file: "apps/experience-qa/server/services/price-checker.js"
+      purpose: "Price extraction from hydrated DOM and discount math validation"
+      key_functions:
+        extractPrices: "extractPrices(domText, domHtml) → { original, discounted, displayedPercentage }; parses strike-through HTML + currency patterns"
+        validateDiscount: "validateDiscount({ original, discounted, displayedPercentage, threshold }) → { pass, computed, displayed, diff }"
+        compareToExpected: "compareToExpected({ actual, expected, currency, threshold }) → { pass, actual, expected, diffAbs, diffPct, currency }"
+
+    cta_validator:
+      file: "apps/experience-qa/server/services/cta-validator.js"
+      purpose: "CTA click + destination validation: geo path match, HTTP status, redundancy check"
+      key_functions:
+        validateCTA: "validateCTA(page, ctaText, geo, runId, stepName) → { pass, url, status, geoMatch, isRedundant, screenshotPath, details }"
+
+    language_detector:
+      file: "apps/experience-qa/server/services/language-detector.js"
+      purpose: "3-tier language detection: document.lang → meta → Claude Haiku fallback"
+      key_functions:
+        detect: "detect(page, geo) → { pass, detected, expected, method, details }; reads model from config:settings.models.languageDetection"
+
+    vision:
+      file: "apps/experience-qa/server/services/vision.js"
+      purpose: "Claude Vision screenshot validation: reads from storage, sends base64 to Claude, returns pass/fail/severity"
+      key_functions:
+        validate: "validate(screenshotPath, stepAction, stepExpectation) → { pass, details, severity }; reads model from config:settings.models.visionValidation"
+
+    geo_orchestrator:
+      file: "apps/experience-qa/server/services/geo-orchestrator.js"
+      purpose: "Multi-geo orchestration: parallel K8s dispatch with sequential local fallback"
+      key_functions:
+        runMultiGeo: "runMultiGeo(runId, planId, plan, geos, options?) → MultiGeoResult; calls isK8sAvailable() first"
+        getGeoStatus: "getGeoStatus(runId) → MultiGeoResult | null; reads KV key run:{runId}:multigeo"
+        cancelMultiGeo: "cancelMultiGeo(runId) → { cancelled, errors }; calls cancelJob() for K8s geos"
+
+    k8s_runner:
+      file: "apps/experience-qa/server/services/k8s-runner.js"
+      purpose: "K8s batch/v1 Job CRUD via native fetch; env vars K8S_API_URL + K8S_TOKEN required"
+      key_functions:
+        createRunJob: "createRunJob(runId, planId, geo, options?) → K8s Job spec with RUN_ID/PLAN_ID/GEO env vars"
+        dispatchJob: "dispatchJob(jobSpec) → { ok, jobId, error }; POSTs to K8s API"
+        watchJob: "watchJob(jobId, timeoutMs?) → { status:'completed'|'failed'|'timeout', logs, error }; polls every 5s"
+        cancelJob: "cancelJob(jobId) → { ok, error }; DELETE with Foreground propagation"
+        isK8sAvailable: "isK8sAvailable() → boolean; GETs /readyz with 5s timeout"
+
+# ─── PATTERNS ─────────────────────────────────────────────────────────────────
+
+patterns:
+  action_handler: |
+    Every action follows this exact pattern:
+    1. export async function main(params)
+    2. Read method:  const method = params.__ow_method?.toUpperCase() ?? 'GET'
+    3. Handle OPTIONS early: return { statusCode: 200, headers: CORS_HEADERS, body: '' }
+    4. Decode body:  JSON.parse(Buffer.from(params.__ow_body, 'base64').toString('utf-8'))
+    5. Extract ID:   extractId(params.__ow_path) — strips leading/trailing slashes, reads last segment
+    6. Call initStorage() for every request (singleton, cheap after first call)
+    7. Return: respond(statusCode, body) where respond() JSON-stringifies and attaches CORS_HEADERS
+    8. Catch-all: err.status ?? 500 — services throw {status: 400/404} to propagate HTTP codes
+
+  three_layer_storage: |
+    Three distinct storage mechanisms, same interface in both adapters:
+    - DB  (getDoc/findDocs/upsertDoc/deleteDoc): structured documents with _id.
+      Collections: test_plans, test_runs, step_results, schedules, conversations, messages
+    - KV  (getState/setState/deleteState): lightweight key-value.
+      Keys: geo:{GEO}, config:settings, run:{runId}:multigeo, run:{runId}:geo:{geo}
+    - Blob (uploadFile/downloadFile/generatePresignURL): binary blobs (screenshots).
+      Path convention: no leading slash — e.g. runs/{runId}/{stepName}.png
+    Dev: in-memory Map (DB/KV) + local-storage/ dir (Blob). Prod: aio-lib-db/state/files.
+    IMPORTANT: aio-lib-db is Early Access — may not be available; storage.js logs a warning
+    and all DB calls throw if it cannot init.
+
+  step_dispatch: |
+    runner.js _executeStep() switch dispatches on step.type:
+      'navigate'       → navigateTo() + waitForCommerceReady() on adobe.com pages
+      'extract_price'  → extractDOM() → extractPrices() → validateDiscount()
+      'check_cta'      → validateCTA() — uses step.ctaText ?? step.action as CTA text
+      'check_language' → detect() (language-detector)
+      'screenshot'     → screenshot() + visionValidate()
+      'click'          → clickElement() — uses step.target ?? step.action
+    Cancellation: checked via store.getDoc(TEST_RUNS, runId) before each step.
+    Side-effects (Jira/Slack) only fired when RUNNER_MODE !== 'k8s'.
+
+  geo_orchestration: |
+    Multi-geo flow (POST /runs with geos:[]):
+    1. Create single run record (multiGeo: true) in DB
+    2. Fire runMultiGeo() as fire-and-forget; return 202 with runId immediately
+    3. runMultiGeo() calls isK8sAvailable() — GETs /readyz with 5s timeout
+    4a. K8s available: dispatch all geos in parallel via Promise.allSettled
+        Any geo whose dispatch fails falls back to local sequential
+    4b. K8s unavailable: all geos run sequentially via local runner
+    5. Per-geo state written to KV after each geo: run:{runId}:geo:{geo}
+    6. Overall result written to KV: run:{runId}:multigeo
+    7. Client polls GET /runs/:id/geo-status → getGeoStatus() reads KV
+
+# ─── DATA SHAPES ──────────────────────────────────────────────────────────────
+
+data_shapes:
+  TestPlan:
+    collection: "test_plans"
+    fields:
+      - "_id (string): UUID assigned at creation"
+      - "name (string): descriptive plan name"
+      - "urlBase (string): base URL for the plan"
+      - "geos (string[]): geo codes e.g. ['MX', 'BR']"
+      - "products (string[]): Adobe product names"
+      - "environment (string): 'live' | other"
+      - "steps (PlanStep[]): ordered step definitions"
+      - "conversationId (string|undefined): set when created via chat"
+      - "createdAt / updatedAt (ISO 8601)"
+    PlanStep_fields:
+      - "order (number): execution order"
+      - "action (string): plain English action"
+      - "expectation (string): expected result"
+      - "type (string): navigate|extract_price|check_cta|check_language|screenshot|click"
+      - "url (string|undefined): for navigate steps"
+      - "ctaText (string|undefined): for check_cta steps; defaults to step.action"
+      - "target (string|undefined): for click steps; defaults to step.action"
+
+  TestRun:
+    collection: "test_runs"
+    fields:
+      - "_id (string): UUID"
+      - "planId (string): foreign key to test_plans"
+      - "batchId (string): groups per-geo runs from same POST"
+      - "status (string): queued|running|passed|failed|cancelled|error|partial"
+      - "geo (string): single-geo runs — e.g. 'MX'"
+      - "geos (string[]|undefined): multi-geo runs only"
+      - "multiGeo (boolean|undefined): true for multi-geo batch runs"
+      - "environment (string): from plan or config override"
+      - "triggeredBy (string): 'api' | 'schedule' | 'webhook'"
+      - "pctComplete (number): 0–100"
+      - "startedAt / finishedAt (ISO 8601 | null)"
+      - "summary ({ total, passed, failed, criticals } | null)"
+      - "createdAt (ISO 8601)"
+
+  StepResult:
+    collection: "step_results"
+    fields:
+      - "_id (string): UUID"
+      - "runId (string): parent run"
+      - "stepOrder (number)"
+      - "stepAction (string)"
+      - "stepExpectation (string)"
+      - "status (string): passed|failed|error|skipped"
+      - "details (string): human-readable outcome"
+      - "screenshotPath (string|null): Blob storage path"
+      - "severity (string): critical|high|medium|low"
+      - "durationMs (number)"
+      - "createdAt (ISO 8601)"
+
+  MultiGeoResult:
+    storage: "KV key run:{runId}:multigeo"
+    fields:
+      - "runId (string)"
+      - "planId (string)"
+      - "geos (object): keyed by geo code → GeoRunState"
+      - "overallStatus (string): pending|running|completed|partial|failed"
+      - "startedAt / completedAt (ISO 8601)"
+    GeoRunState_fields:
+      - "status (string): pending|running|completed|failed|cancelled"
+      - "mode (string): 'k8s' | 'local'"
+      - "jobId (string|null): K8s job name when mode='k8s'"
+      - "startedAt / completedAt (ISO 8601)"
+      - "steps (StepResult[])"
+      - "error (string|null)"
+
+  Settings:
+    kv_key: "config:settings"
+    fields:
+      - "models.planGeneration (string): default 'claude-sonnet-4-6'"
+      - "models.visionValidation (string): default 'claude-sonnet-4-6'"
+      - "models.languageDetection (string): default 'claude-haiku-4-5-20251001'"
+      - "models.chatRefinement (string): default 'claude-sonnet-4-6'"
+      - "priceMismatchThresholdPct (number): 0–100, default 2.0"
+      - "defaultGeos (string[]): default ['MX', 'BR', 'CO', 'PE']"
+      - "jira.baseUrl / jira.projectKey / jira.defaultPriority"
+      - "slack.webhookUrl"
+
+  GeoMapping:
+    kv_key: "geo:{GEO}"
+    fields:
+      - "geo (string): e.g. 'MX'"
+      - "urlPath (string): e.g. '/mx/'"
+      - "language (string): 'en'|'es'|'pt'"
+      - "locale (string): e.g. 'es-MX'"
+      - "acceptLanguage (string): HTTP Accept-Language header value"
+      - "akamaiLocale (string): Akamai geo routing param e.g. 'mx'"
+
+# ─── INTEGRATION POINTS ───────────────────────────────────────────────────────
+
+integration_points:
+  claude_api:
+    how: "All Claude API callers (planner.js, vision.js, language-detector.js) call getAnthropicClient() from oauth.js at request time — never at module load."
+    key_contract: "Model read from config:settings at call time. oat01 tokens use x-api-key header via bearerClient (not SDK authToken). On cache miss or 401, token is re-read from .env directly (not process.env). Run scripts/refresh-token.sh to update .env with a fresh token."
+    never_do: "Never instantiate new Anthropic({authToken}) — it sends Authorization: Bearer which Anthropic rejects for oat01 tokens."
+
+  aio_runtime:
+    how: "app.config.yaml maps action names to handler files. Each action is an OpenWhisk function."
+    key_contract: "webhooks action uses web:'raw' (no body parsing) — required for HMAC signature verification. All others use web:'yes'."
+
+  k8s:
+    how: "k8s-runner.js uses native fetch against K8S_API_URL. Namespace is hardcoded as 'experience-qa'."
+    key_contract: "K8S_API_URL + K8S_TOKEN env vars required. K8S_RUNNER_IMAGE defaults to 'experience-qa-runner:latest'. K8s jobs get RUN_ID, PLAN_ID, GEO env vars."
+
+  aem_webhooks:
+    how: "AEM ContentPublished event → POST /webhooks/aem. handleAEMWebhook maps content path to URL, matches against plan.urlBase prefixes."
+    key_contract: "Signature verified via X-Adobe-Signature-256 header vs WEBHOOK_SECRET env var. Adobe I/O challenge handshake via ?challenge= query param."
+
+  jira:
+    how: "runner.js calls createIssue() from services/jira.js for critical/high failures in sequential mode only"
+    key_contract: "Only fires when RUNNER_MODE !== 'k8s'. jira.js only exports createIssue — no incoming webhook handler."
+
+  slack:
+    how: "runner.js calls postRunStarted() and postRunSummary() from services/slack.js"
+    key_contract: "Only fires when RUNNER_MODE !== 'k8s'. slack.js only exports postRunStarted and postRunSummary (outbound only)."
+
+# ─── GOTCHAS ──────────────────────────────────────────────────────────────────
+
+gotchas:
+  - "NOT Express: actions export async function main(params), not app.get(). No middleware, no req/res objects."
+  - "AIO body is base64: params.__ow_body must be decoded with Buffer.from(...,'base64').toString('utf-8') before JSON.parse."
+  - "waitForCommerceReady() MUST be called after navigateTo() on any adobe.com commerce page — networkidle alone does not wait for MAS price hydration."
+  - "context.close() MUST be called after each geo run — Playwright contexts are not garbage collected; memory leak in long-running runtimes."
+  - "One context per geo — NEVER share a BrowserContext across geos. Cookies, headers, and storage state cross-contaminate."
+  - "aio-lib-db is Early Access: storage.js catches its import failure and all DB ops throw. Test with NODE_ENV=development for local work."
+  - "Jira and Slack side-effects are suppressed in K8s mode (RUNNER_MODE=k8s). K8s worker pods handle side-effects via callback action — don't add them to the runner directly."
+  - "webhooks action uses web:'raw' in app.config.yaml — body is NOT pre-parsed. Must manually decode. All other actions use web:'yes'."
+  - "Geo codes must be uppercase (e.g. 'MX', 'BR') — storage keys are geo:{GEO} uppercase. Runs normalizes with .toUpperCase() in POST /runs multi-geo path."
+  - "extractPrices() requires hydrated DOM text — caller must invoke waitForCommerceReady() first or prices will be null."
+  - "Scheduler activeTasks is an in-memory Map — lost on runtime restart. scheduler.init() must be called on server start to re-register all enabled schedules."
+  - "Plans delete is blocked (409) if any run with status='running' references the planId."
+  - "oat01 tokens MUST use x-api-key header, NOT Authorization: Bearer. The Anthropic SDK's authToken option sends Bearer — do not use it. oauth.js bearerClient is the only correct approach."
+  - "Token auto-refresh reads .env directly (not process.env) — .env is the single source of truth. On expiry or 401, oauth.js calls _readTokenFromEnvFile() and retries once. To get a fresh token run scripts/refresh-token.sh, which tries CLAUDE_CODE_OAUTH_TOKEN env var → Keychain → manual paste, validates live, then writes to .env."
+  - "chat.js returns plan with BOTH _id and id fields (id: planId, _id: planId). Client guards on plan.id — always include both to prevent silent no-op on Run Plan."
+  - "POST /runs (Express routes) returns { batchId, runIds[], geos[], runs[] }. AIO action returns { batchId, runIds[], geos[] }. Client expects runIds[] and geos[] — always return both."
+  - "Language detector Tier 3 (Claude) only fires when Tiers 1+2 find no lang attribute. Uses claude-haiku-4-5-20251001 by default (configurable)."
+
+# ─── BEST PRACTICES ───────────────────────────────────────────────────────────
+
+best_practices:
+  - "Always call initStorage() inside the action/service function, not at module scope — AIO Runtime may not have credentials at import time."
+  - "Use err.status ?? 500 in catch blocks to propagate service-thrown HTTP status codes (addSchedule throws {status:400} for bad cron expressions)."
+  - "Read model names from config:settings at call time (not module init) — allows hot config changes."
+  - "Fire-and-forget: POST /runs returns 202 immediately. Never await executeRun() in the action handler. Client polls GET /runs/:id."
+  - "Store KV state per geo after each geo completes in runMultiGeo() — partial progress is observable via getGeoStatus() even if the run crashes mid-way."
+  - "Validate cron expressions via cron.validate() before persisting — addSchedule and updateSchedule both throw status:400 on invalid expressions."
+  - "Keep step.type in the plan steps strictly in the allowed set (navigate|extract_price|check_cta|check_language|screenshot|click) — unknown types produce 'skipped' results without error."
+  - "Blob paths must have no leading slash — both adapters strip it, but be consistent to avoid double-slash keys in prod."
+
+# ─── KEY FILE LOCATIONS ───────────────────────────────────────────────────────
+
+key_file_locations:
+  actions:
+    chat:      "apps/experience-qa/server/actions/chat/index.js"
+    plans:     "apps/experience-qa/server/actions/plans/index.js"
+    runs:      "apps/experience-qa/server/actions/runs/index.js"
+    schedules: "apps/experience-qa/server/actions/schedules/index.js"
+    settings:  "apps/experience-qa/server/actions/settings/index.js"
+    webhooks:  "apps/experience-qa/server/actions/webhooks/index.js"
+
+  services:
+    oauth:            "apps/experience-qa/server/services/oauth.js"
+    storage:          "apps/experience-qa/server/services/storage.js"
+    browser:          "apps/experience-qa/server/services/browser.js"
+    planner:          "apps/experience-qa/server/services/planner.js"
+    adobe_io:         "apps/experience-qa/server/services/adobe-io.js"
+    osi_mapping:      "apps/experience-qa/server/services/osi-mapping.js"
+    wcs:              "apps/experience-qa/server/services/wcs.js"
+    aos:              "apps/experience-qa/server/services/aos.js"
+    runner:           "apps/experience-qa/server/services/runner.js"
+    scheduler:        "apps/experience-qa/server/services/scheduler.js"
+    chat:             "apps/experience-qa/server/services/chat.js"
+    price_checker:    "apps/experience-qa/server/services/price-checker.js"
+    cta_validator:    "apps/experience-qa/server/services/cta-validator.js"
+    language_detector: "apps/experience-qa/server/services/language-detector.js"
+    vision:           "apps/experience-qa/server/services/vision.js"
+    geo_orchestrator: "apps/experience-qa/server/services/geo-orchestrator.js"
+    k8s_runner:       "apps/experience-qa/server/services/k8s-runner.js"
+
+  config:
+    aio_manifest: "app.config.yaml"

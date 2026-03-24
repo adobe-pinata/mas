@@ -1,5 +1,5 @@
 ---
-description: Mark a feature or task as complete — updates PROGRESS.md, archives the plan spec if one exists, and suggests expert self-improve.
+description: Mark a feature or task as complete — updates PROGRESS.md, archives the plan spec if one exists, and suggests mental model self-improve.
 argument-hint: "<what you just finished>"
 ---
 
@@ -36,15 +36,15 @@ If SPEC_FILE is not set, check if any file matching `specs/*plan*.md` or `specs/
 - If exactly one candidate is found, ask the user: "Archive `<filename>`?"
 - If multiple candidates or none, skip and note it.
 
-### Step 3 — Suggest expert self-improve
+### Step 3 — Suggest mental model self-improve
 
-Based on what WORK_DESCRIPTION touched, suggest which expert(s) to sync so expertise stays accurate:
+Based on what WORK_DESCRIPTION touched, suggest which mental model(s) to sync so expertise stays accurate:
 
 | Changed | Suggest |
 |---------|---------|
-| Server actions, services, storage, runner | `/experts:qa-server:self-improve` |
-| Client pages, components, api.js | `/experts:frontend:self-improve` |
-| Jira, Slack, WCS, AOS, webhooks | `/experts:qa-integrations:self-improve` |
+| Server actions, services, storage, runner | `/mental-model:experience-server:self-improve` |
+| Client pages, components, api.js | `/mental-model:experience-frontend:self-improve` |
+| Jira, Slack, WCS, AOS, webhooks | `/mental-model:experience-integrations:self-improve` |
 
 Print the suggestion — do not run it automatically.
 
@@ -54,5 +54,5 @@ Print a brief summary:
 ```
 ✅ Marked complete: <WORK_DESCRIPTION>
 📦 Archived: <spec file or "none">
-🔁 Run next: <expert self-improve command or "none needed">
+🔁 Run next: <mental model self-improve command or "none needed">
 ```

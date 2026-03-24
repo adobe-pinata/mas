@@ -1,0 +1,79 @@
+# {{DOMAIN}} Implementation Expertise
+# {{TAGLINE}}
+#
+# USAGE: This file is the mental model for all {{DOMAIN}}-related tasks.
+# Every file path, function name, and pattern must be verified against the real codebase.
+# Run /mental-model:{{DOMAIN}}:self-improve after any {{DOMAIN}} changes to keep it current.
+
+overview:
+  description: "{{ONE_SENTENCE_DESCRIPTION}}"
+  core_insight: "{{KEY_ARCHITECTURAL_INSIGHT}}"
+  architecture_pattern: "{{DOMINANT_PATTERN}}"
+  value_proposition:
+    - "{{VALUE_1}}"
+    - "{{VALUE_2}}"
+
+# ─── KEY FILES ──────────────────────────────────────────────────────────────
+# List actual files with their real paths (relative to project root).
+# Group by logical area. Include line numbers for complex files.
+
+key_files:
+  {{GROUP_1}}:
+    {{name_1}}:
+      file: "{{relative/path/to/file.js}}"
+      purpose: "{{what it does}}"
+      key_functions:
+        {{fn_name}}: "{{signature and what it does}}"
+
+  {{GROUP_2}}:
+    {{name_2}}:
+      file: "{{relative/path/to/file.js}}"
+      purpose: "{{what it does}}"
+      key_classes:
+        {{ClassName}}: "{{what it represents}}"
+
+# ─── PATTERNS ────────────────────────────────────────────────────────────────
+# Recurring implementation patterns unique to this domain.
+# Write as recipes an engineer can follow.
+
+patterns:
+  {{pattern_name}}: |
+    {{Step-by-step pattern description.
+    Include code snippets where they clarify the pattern.}}
+
+# ─── DATA SHAPES ─────────────────────────────────────────────────────────────
+# Key data structures: request/response shapes, DB schemas, config formats.
+
+data_shapes:
+  {{shape_name}}:
+    fields:
+      - "{{field_name}} ({{type}}): {{description}}"
+
+# ─── INTEGRATION POINTS ──────────────────────────────────────────────────────
+# How this domain connects to other parts of the system.
+
+integration_points:
+  {{target_domain}}:
+    how: "{{description of how they connect}}"
+    key_contract: "{{the interface/shape/protocol}}"
+
+# ─── GOTCHAS ─────────────────────────────────────────────────────────────────
+# Non-obvious facts that trip up engineers. Each must be a concrete, actionable warning.
+
+gotchas:
+  - "{{GOTCHA_1: Specific wrong assumption → correct behavior}}"
+  - "{{GOTCHA_2}}"
+
+# ─── BEST PRACTICES ──────────────────────────────────────────────────────────
+# Verified patterns from the actual codebase. Not aspirational.
+
+best_practices:
+  - "{{PRACTICE_1}}"
+  - "{{PRACTICE_2}}"
+
+# ─── KEY FILE LOCATIONS ──────────────────────────────────────────────────────
+# Quick-reference index for the most important files.
+
+key_file_locations:
+  {{category}}:
+    {{label}}: "{{relative/path}}"

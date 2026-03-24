@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 # Purpose
 
-Scaffold a new React SPA boilerplate for an Adobe Experience app under `apps/$1/`, using Adobe Spectrum S2 components. This command reads a wireframe/POC specification or high-level prompt, uses the `adobe-spectrum` agent to look up correct S2 component imports, props, and patterns, scaffolds the full directory structure mirroring `apps/experience-qa/client/`, and then invokes `/experts:frontend:plan` to elaborate an implementation plan. Follow the `Instructions` and `Workflow` sections below.
+Scaffold a new React SPA boilerplate for an Adobe Experience app under `apps/$1/`, using Adobe Spectrum S2 components. This command reads a wireframe/POC specification or high-level prompt, uses the `adobe-spectrum` agent to look up correct S2 component imports, props, and patterns, scaffolds the full directory structure mirroring `apps/experience-qa/client/`, and then invokes `/mental-model:experience-frontend:plan` to elaborate an implementation plan. Follow the `Instructions` and `Workflow` sections below.
 
 ## Variables
 
@@ -30,7 +30,7 @@ CLIENT_ROOT: apps/$1/client
 - Create a minimal `App.tsx` with React Router routes for all pages identified in the wireframe.
 - Create a minimal `main.tsx` entry point.
 - Do NOT add server-side code — this command only scaffolds the client.
-- After scaffolding, invoke `/experts:frontend:plan` to produce a detailed implementation plan for the new app based on the wireframe spec.
+- After scaffolding, invoke `/mental-model:experience-frontend:plan` to produce a detailed implementation plan for the new app based on the wireframe spec.
 
 ## Workflow
 
@@ -58,7 +58,7 @@ CLIENT_ROOT: apps/$1/client
 6. **Scaffold pages** — For each page in the wireframe, create a stub file in `src/pages/` with the correct S2 component imports and a basic layout skeleton.
 7. **Scaffold components** — For each reusable component in the wireframe, create a stub file in `src/components/` using the S2 patterns retrieved in step 3.
 8. **Scaffold App.tsx and main.tsx** — Wire up React Router with all page routes and wrap in the S2 Provider.
-9. **Invoke /experts:frontend:plan** — Call the `frontend` expert plan skill to elaborate a full implementation plan for the new app based on the wireframe, referencing the newly scaffolded files.
+9. **Invoke /mental-model:experience-frontend:plan** — Call the `frontend` mental model plan skill to elaborate a full implementation plan for the new app based on the wireframe, referencing the newly scaffolded files.
 
 ## Report
 
@@ -67,4 +67,4 @@ After completion, report back with:
 - A tree listing of all files created under `apps/$1/`
 - A summary of S2 components used and their import sources
 - Any wireframe elements that could NOT be mapped to an S2 component (with suggested alternatives)
-- The implementation plan output from `/experts:frontend:plan`
+- The implementation plan output from `/mental-model:experience-frontend:plan`
