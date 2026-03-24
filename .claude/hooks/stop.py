@@ -154,23 +154,6 @@ def announce_completion():
         pass
 
 
-def forward_to_log_event(input_data):
-    """Forward the event to log_event.py for structured JSONL logging."""
-    try:
-        script_dir = Path(__file__).parent
-        log_event_script = script_dir / "log_event.py"
-        if log_event_script.exists():
-            subprocess.run(
-                ["uv", "run", str(log_event_script), "--event-type", "Stop"],
-                input=json.dumps(input_data),
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-    except Exception:
-        pass  # Never block Claude
-
-
 def main():
     try:
         # Parse command line arguments
@@ -191,9 +174,6 @@ def main():
         # previous stop hook decision.
         if stop_hook_active:
             sys.exit(0)
-
-        # Forward to structured JSONL logger
-        forward_to_log_event(input_data)
 
         # Ensure log directory exists
         log_dir = os.path.join(os.getcwd(), "logs")

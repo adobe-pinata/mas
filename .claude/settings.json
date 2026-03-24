@@ -1,9 +1,7 @@
 {
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-    "CLAUDE_HOOKS_LOG_DIR": ".logs",
-    "CLAUDE_PROJECT_DIR": "/Users/rivero/ai/agentic-experience",
-    "SOURCE_APP": "agentic-experience"
+    "CLAUDE_HOOKS_LOG_DIR": ".logs"
   },
   "hooks": {
     "SessionStart": [
@@ -83,6 +81,10 @@
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/send_event.py --source-app $SOURCE_APP --event-type Notification --summarize"
+          },
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type Notification"
           }
         ]
       }
@@ -91,6 +93,10 @@
       {
         "matcher": "",
         "hooks": [
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type Stop"
+          },
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/stop.py"
@@ -106,6 +112,10 @@
       {
         "matcher": "",
         "hooks": [
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type SubagentStop"
+          },
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/subagent_stop.py"
@@ -124,6 +134,10 @@
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/send_event.py --source-app $SOURCE_APP --event-type PreCompact --summarize"
+          },
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type PreCompact"
           }
         ]
       }
@@ -138,6 +152,10 @@
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/send_event.py --source-app $SOURCE_APP --event-type UserPromptSubmit --summarize"
+          },
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type UserPromptSubmit"
           }
         ]
       }

@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# requires-python = ">=3.8"
+# requires-python = ">=3.11"
 # dependencies = []
 # ///
 
@@ -44,11 +44,31 @@ PROMOTED_FIELDS = [
 ]
 
 
-def build_log_record(event_type, input_data, session_id):
+def resolve_source_app(project_dir: Path) -> str:
+    """Resolve source_app: SOURCE_APP env → .adw.config.json → fallback."""
+    source_app = os.environ.get("SOURCE_APP")
+    if source_app:
+        return source_app
+
+    config_path = project_dir / ".adw.config.json"
+    if config_path.exists():
+        try:
+            with open(config_path) as f:
+                config = json.load(f)
+            app_name = config.get("source_app") or config.get("name")
+            if app_name:
+                return app_name
+        except Exception:
+            pass
+
+    return "agentic-harness"
+
+
+def build_log_record(event_type, input_data, session_id, project_dir: Path):
     """Build a structured log record from hook input data."""
     record = {
         "timestamp": int(time.time() * 1000),
-        "source_app": "agentic-harness",
+        "source_app": resolve_source_app(project_dir),
         "session_id": session_id,
         "hook_event_type": event_type,
     }
@@ -64,10 +84,10 @@ def build_log_record(event_type, input_data, session_id):
     return record
 
 
-def ensure_log_dir(session_id):
+def ensure_log_dir(session_id, project_dir: Path) -> Path:
     """Create and return the per-session log directory."""
-    project_dir = os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())
-    log_dir = Path(project_dir) / ".logs" / session_id
+    log_subdir = os.environ.get("CLAUDE_HOOKS_LOG_DIR", ".logs")
+    log_dir = project_dir / log_subdir / session_id
     log_dir.mkdir(parents=True, exist_ok=True)
     return log_dir
 
@@ -97,11 +117,12 @@ def main():
         # Bad input — nothing to log, exit cleanly
         sys.exit(0)
 
+    project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
     session_id = input_data.get("session_id", "unknown")
-    record = build_log_record(args.event_type, input_data, session_id)
+    record = build_log_record(args.event_type, input_data, session_id, project_dir)
 
     try:
-        log_dir = ensure_log_dir(session_id)
+        log_dir = ensure_log_dir(session_id, project_dir)
         write_record(log_dir, args.event_type, record)
     except Exception:
         # Disk errors must never block Claude
