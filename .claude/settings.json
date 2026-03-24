@@ -1,7 +1,9 @@
 {
   "env": {
-    "CLAUDE_PROJECT_DIR": "/Users/rivero/ai/experience-qa",
-    "SOURCE_APP": "experience-qa"
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "CLAUDE_HOOKS_LOG_DIR": ".logs",
+    "CLAUDE_PROJECT_DIR": "/Users/rivero/ai/agentic-experience",
+    "SOURCE_APP": "agentic-experience"
   },
   "hooks": {
     "SessionStart": [
@@ -11,6 +13,10 @@
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/session_start.py --load-context"
+          },
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type SessionStart"
           }
         ]
       }
@@ -26,6 +32,10 @@
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/send_event.py --source-app $SOURCE_APP --event-type PreToolUse --summarize"
+          },
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type PreToolUse"
           }
         ]
       }
@@ -41,6 +51,10 @@
           {
             "type": "command",
             "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/send_event.py --source-app $SOURCE_APP --event-type PostToolUse --summarize"
+          },
+          {
+            "type": "command",
+            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/log_event.py --event-type PostToolUse"
           }
         ]
       },
@@ -142,5 +156,6 @@
     ],
     "defaultMode": "bypassPermissions"
   },
-  "enableAllProjectMcpServers": true
+  "enableAllProjectMcpServers": true,
+  "teammateMode": "in-process"
 }

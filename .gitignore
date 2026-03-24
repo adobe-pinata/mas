@@ -22,10 +22,14 @@ build/
 .parcel-cache/
 
 # Logs
-logs/*
-!logs/.gitkeep
 *.log
 npm-debug.log*
+
+# Hook event logs (runtime, per-session)
+logs/
+.logs/
+**/logs/
+**/.logs/
 
 # App Builder
 dist-app/
@@ -37,6 +41,7 @@ apps/experience-pm/
 apps/content-qa/
 apps/catch/
 apps/aics-lab-console-develop/
+apps/agent-orchestrator/
 
 # OS
 .DS_Store
@@ -77,3 +82,4 @@ adws/.env.adw
 **/__pycache__/
 *.pyc
 apps/spectrum-init
+apps/mas/
