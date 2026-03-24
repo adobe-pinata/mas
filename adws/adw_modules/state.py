@@ -198,6 +198,7 @@ class ADWState:
             "frontend_port": self.data.get("frontend_port"),
             "all_adws": self.data.get("all_adws", []),
             "slack_thread_ts": self.data.get("slack_thread_ts"),
+            "session_ids": self.data.get("session_ids", []),
         }
         print(json.dumps(output_data, indent=2))
 

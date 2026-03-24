@@ -51,7 +51,7 @@ SLASH_COMMAND_MODEL_MAP: Final[Dict[SlashCommand, Dict[ModelSet, str]]] = {
 
 
 def get_model_for_slash_command(
-    request: AgentTemplateRequest, default: str = "sonnet"
+    request: AgentTemplateRequest, default: str = "sonnet", state=None
 ) -> str:
     """Get the appropriate model for a template request based on ADW state and slash command.
 
@@ -61,6 +61,7 @@ def get_model_for_slash_command(
     Args:
         request: The template request containing the slash command and adw_id
         default: Default model if not found in mapping
+        state: Optional pre-loaded ADWState to avoid redundant file reads
 
     Returns:
         Model name to use (e.g., "sonnet" or "opus")
@@ -68,9 +69,10 @@ def get_model_for_slash_command(
     # Import here to avoid circular imports
     from .state import ADWState
 
-    # Load state to get model_set
+    # Load state to get model_set (skip if caller already loaded it)
     model_set: ModelSet = "base"  # Default model set
-    state = ADWState.load(request.adw_id)
+    if state is None:
+        state = ADWState.load(request.adw_id)
     if state:
         model_set = state.get("model_set", "base")
 
@@ -533,8 +535,12 @@ def execute_template(request: AgentTemplateRequest) -> AgentPromptResponse:
         # If state has model_set="base" or missing, this will use "sonnet"
         response = execute_template(request)
     """
+    # Load state once — reused for model selection and session_id tracking below
+    from .state import ADWState
+    state = ADWState.load(request.adw_id)
+
     # Get the appropriate model for this request
-    mapped_model = get_model_for_slash_command(request)
+    mapped_model = get_model_for_slash_command(request, state=state)
     request = request.model_copy(update={"model": mapped_model})
 
     # Construct prompt from slash command and args
@@ -567,11 +573,10 @@ def execute_template(request: AgentTemplateRequest) -> AgentPromptResponse:
     # Execute with retry logic and return response (prompt_claude_code now handles all parsing)
     response = prompt_claude_code_with_retry(prompt_request)
 
-    if response.session_id:
-        from .state import ADWState
-        state = ADWState.load(request.adw_id)
-        if state:
-            state.append_session_id(response.session_id)
-            state.save(workflow_step=f"{request.agent_name}:{request.slash_command}")
+    # Store session_id for all completed runs (including failures) — intentional:
+    # failed sessions are useful for log traceability and post-mortem debugging.
+    if response.session_id and state:
+        state.append_session_id(response.session_id)
+        state.save(workflow_step=f"{request.agent_name}:{request.slash_command}")
 
     return response
