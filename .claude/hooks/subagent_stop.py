@@ -96,7 +96,11 @@ def main():
         if stop_hook_active:
             sys.exit(0)
 
-        # Ensure log directory exists
+        # Legacy mutable-JSON log — predates the JSONL observability system.
+        # log_event.py (wired first in settings.json) now writes the canonical
+        # SubagentStop record to .logs/{session_id}/SubagentStop.jsonl.  This
+        # write is kept for backwards compatibility; remove once no consumers
+        # rely on logs/subagent_stop.json.
         log_dir = os.path.join(os.getcwd(), "logs")
         os.makedirs(log_dir, exist_ok=True)
         log_path = os.path.join(log_dir, "subagent_stop.json")
