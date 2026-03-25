@@ -67,7 +67,7 @@ export default class TranslationEditorPage {
             const tableEl = tables.find((el) => el.shadowRoot?.querySelector('sp-table.fragments-table'));
             if (!tableEl?.shadowRoot) return;
             const checkboxes = findAllInShadow(tableEl.shadowRoot, 'sp-checkbox');
-            const checkbox = checkboxes[0];
+            const checkbox = checkboxes[1] ?? checkboxes[0]; // prefer row checkbox; fall back if only one
             if (checkbox) checkbox.click();
         });
         await this.page.waitForTimeout(500);
