@@ -9,7 +9,7 @@ import logging
 from typing import Optional, Tuple
 
 # Import GitHub functions from existing module
-from adw_modules.github import get_repo_url, extract_repo_path, make_issue_comment, get_effective_repo_path
+from adw_modules.github import get_repo_url, extract_repo_path, make_issue_comment, get_effective_repo_path, get_github_env
 
 
 def get_current_branch(cwd: Optional[str] = None) -> str:
@@ -45,6 +45,7 @@ def check_pr_exists(branch_name: str) -> Optional[str]:
     except Exception as e:
         return None
 
+    env = get_github_env()
     result = subprocess.run(
         [
             "gh",
@@ -59,6 +60,7 @@ def check_pr_exists(branch_name: str) -> Optional[str]:
         ],
         capture_output=True,
         text=True,
+        env=env,
     )
     if result.returncode == 0:
         prs = json.loads(result.stdout)
@@ -126,6 +128,7 @@ def get_pr_number(branch_name: str) -> Optional[str]:
     except Exception as e:
         return None
 
+    env = get_github_env()
     result = subprocess.run(
         [
             "gh",
@@ -142,6 +145,7 @@ def get_pr_number(branch_name: str) -> Optional[str]:
         ],
         capture_output=True,
         text=True,
+        env=env,
     )
     if result.returncode == 0:
         prs = json.loads(result.stdout)
@@ -157,6 +161,7 @@ def approve_pr(pr_number: str, logger: logging.Logger) -> Tuple[bool, Optional[s
     except Exception as e:
         return False, f"Failed to get repo info: {e}"
 
+    env = get_github_env()
     result = subprocess.run(
         [
             "gh",
@@ -171,6 +176,7 @@ def approve_pr(pr_number: str, logger: logging.Logger) -> Tuple[bool, Optional[s
         ],
         capture_output=True,
         text=True,
+        env=env,
     )
     if result.returncode != 0:
         return False, result.stderr
@@ -195,6 +201,8 @@ def merge_pr(
     except Exception as e:
         return False, f"Failed to get repo info: {e}"
 
+    env = get_github_env()
+
     # First check if PR is mergeable
     result = subprocess.run(
         [
@@ -209,6 +217,7 @@ def merge_pr(
         ],
         capture_output=True,
         text=True,
+        env=env,
     )
     if result.returncode != 0:
         return False, f"Failed to check PR status: {result.stderr}"
@@ -236,7 +245,7 @@ def merge_pr(
         ["--body", "Merged by ADW Ship workflow after successful validation."]
     )
 
-    result = subprocess.run(merge_cmd, capture_output=True, text=True)
+    result = subprocess.run(merge_cmd, capture_output=True, text=True, env=env)
     if result.returncode != 0:
         return False, result.stderr
 

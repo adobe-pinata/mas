@@ -210,6 +210,11 @@ def get_safe_subprocess_env() -> Dict[str, str]:
         # GitHub Configuration (optional)
         # GITHUB_PAT is optional - if not set, will use default gh auth
         "GITHUB_PAT": os.getenv("GITHUB_PAT"),
+
+        # GitHub App Configuration (optional - bot identity for ADWS posts)
+        "GITHUB_APP_ID": os.getenv("GITHUB_APP_ID"),
+        "GITHUB_APP_INSTALLATION_ID": os.getenv("GITHUB_APP_INSTALLATION_ID"),
+        "GITHUB_APP_PEM_PATH": os.getenv("GITHUB_APP_PEM_PATH"),
         
         # Claude Code Configuration
         "CLAUDE_CODE_PATH": os.getenv("CLAUDE_CODE_PATH", "claude"),
@@ -253,10 +258,15 @@ def get_safe_subprocess_env() -> Dict[str, str]:
         "PWD": os.getcwd(),
     }
     
-    # Add GH_TOKEN as alias for GITHUB_PAT if it exists
-    github_pat = os.getenv("GITHUB_PAT")
-    if github_pat:
-        safe_env_vars["GH_TOKEN"] = github_pat
+    # Set GH_TOKEN: GitHub App token > GITHUB_PAT > unset
+    from adw_modules.github_app_auth import get_app_token
+    app_token = get_app_token()
+    if app_token:
+        safe_env_vars["GH_TOKEN"] = app_token
+    else:
+        github_pat = os.getenv("GITHUB_PAT")
+        if github_pat:
+            safe_env_vars["GH_TOKEN"] = github_pat
     
     # Filter out None values
     filtered = {k: v for k, v in safe_env_vars.items() if v is not None}

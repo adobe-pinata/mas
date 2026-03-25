@@ -9,6 +9,7 @@ from pathlib import Path
 from adw_modules.r2_uploader import R2Uploader
 from adw_modules.app_config import get_app_config_value
 from adw_modules.data_types import IssueCreationRequest, IssueCreationResult
+from adw_modules.github import get_github_env
 
 
 def upload_issue_screenshots(
@@ -181,11 +182,13 @@ def create_issue_with_screenshots(
         if request.repository_path:
             cmd.extend(["--repo", request.repository_path])
 
+        env = get_github_env()
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            check=True
+            check=True,
+            env=env,
         )
 
         # Extract issue URL from output

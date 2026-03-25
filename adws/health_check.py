@@ -4,6 +4,8 @@
 # dependencies = [
 #     "python-dotenv",
 #     "pydantic",
+#     "PyJWT",
+#     "cryptography",
 # ]
 # ///
 

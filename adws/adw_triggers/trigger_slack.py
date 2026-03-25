@@ -8,6 +8,8 @@
 #     "pydantic",
 #     "rich",
 #     "boto3",
+#     "PyJWT",
+#     "cryptography",
 # ]
 # ///
 
@@ -43,6 +45,7 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from rich.console import Console
+from rich.table import Table
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -54,6 +57,7 @@ from adw_modules.data_types import IssueCreationRequest, AgentTemplateRequest
 from adw_modules.issue_creator import create_issue_with_screenshots
 from adw_modules.agent import execute_template
 from adw_modules.utils import parse_json
+from adw_modules.state import ADWState
 
 load_dotenv()
 
@@ -186,7 +190,7 @@ def trigger_adw_workflow(issue_number: int, workflow_name: str = "adw_sdlc_iso",
 
 # ─── Message Handler ──────────────────────────────────────────────────────────
 
-def handle_message_event(event: dict, say) -> None:
+def handle_message_event(event: dict, say, client=None) -> None:
     """Process an incoming Slack message event."""
     # Ignore bot messages (including our own replies)
     if event.get("bot_id") or event.get("subtype") == "bot_message":
@@ -214,6 +218,13 @@ def handle_message_event(event: dict, say) -> None:
         processed_messages[ts] = None
         if len(processed_messages) > MAX_PROCESSED_CACHE:
             processed_messages.popitem(last=False)
+
+    # Add pineapple reaction to acknowledge the message
+    if client and ts and channel:
+        try:
+            client.reactions_add(channel=channel, name="pineapple", timestamp=ts)
+        except Exception as e:
+            console.print(f"  [yellow]⚠[/] Failed to add reaction: {e}")
 
     # Ignore messages older than STARTUP_IGNORE_AGE_SECS (avoid replaying history)
     try:
@@ -363,10 +374,169 @@ def show_status():
 
 
 # ─── Signal Handlers ─────────────────────────────────────────────────────────
+# Registered inside main() as a closure over the SocketModeHandler instance,
+# so SIGINT, SIGTERM, and SIGHUP all close the WebSocket cleanly.
 
-def signal_handler(signum, frame):
-    console.print(f"\n  [cyan]●[/] Received signal {signum}, shutting down...")
-    shutdown_event.set()
+
+# ─── System Checks ──────────────────────────────────────────────────────────
+
+def check_github_auth() -> bool:
+    """Check if GitHub CLI is authenticated."""
+    try:
+        result = subprocess.run(
+            ["gh", "auth", "status"],
+            capture_output=True,
+            text=True,
+            timeout=2
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False
+
+
+def check_claude_cli() -> bool:
+    """Check if Claude CLI is available."""
+    try:
+        claude_path = os.getenv("CLAUDE_CODE_PATH", "claude")
+        result = subprocess.run(
+            [claude_path, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=2
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False
+
+
+def check_repository() -> bool:
+    """Check if git repository is properly configured."""
+    try:
+        return bool(REPO_PATH)
+    except:
+        return False
+
+
+def get_system_status_detailed() -> tuple[str, list[str]]:
+    """Get system status with warnings for failures."""
+    warnings = []
+
+    github_ok = check_github_auth()
+    if not github_ok:
+        warnings.append("⚠ GitHub CLI not authenticated (run 'gh auth login')")
+
+    claude_ok = check_claude_cli()
+    if not claude_ok:
+        warnings.append("⚠ Claude CLI not available")
+
+    repo_ok = check_repository()
+    if not repo_ok:
+        warnings.append("⚠ Git repository not configured")
+
+    github_icon = "[green]✓[/]" if github_ok else "[red]✗[/]"
+    claude_icon = "[green]✓[/]" if claude_ok else "[red]✗[/]"
+    repo_icon = "[green]✓[/]" if repo_ok else "[red]✗[/]"
+
+    status_string = f"{github_icon} {claude_icon} {repo_icon}"
+    return status_string, warnings
+
+
+# ─── Active Workflows ──────────────────────────────────────────────────────
+
+def discover_active_workflows() -> list[dict[str, any]]:
+    """Discover all active ADW workflows and their current phases."""
+    workflows = []
+    agents_dir = Path(__file__).parent.parent.parent / "agents"
+
+    if not agents_dir.exists():
+        return workflows
+
+    from adw_modules.phase_detection import PhaseDetector
+
+    for adw_dir in agents_dir.iterdir():
+        if not adw_dir.is_dir():
+            continue
+
+        state = ADWState.load(adw_dir.name)
+        if not state:
+            continue
+
+        worktree_path = state.get("worktree_path")
+        if worktree_path is None:
+            continue
+
+        if not Path(worktree_path).exists():
+            continue
+
+        # Filter to workflows targeting the current repo
+        # When APP override is active, only show workflows that explicitly match
+        target_repo = state.get("target_repo")
+        if _APP_OVERRIDE_ACTIVE:
+            if target_repo != REPO_PATH:
+                continue
+        elif target_repo and target_repo != REPO_PATH:
+            continue
+
+        detector = PhaseDetector(
+            adw_id=state.get("adw_id"),
+            issue_number=state.get("issue_number")
+        )
+        current_phase = detector.detect_last_completed_phase()
+
+        workflows.append({
+            "adw_id": state.get("adw_id"),
+            "issue_number": state.get("issue_number"),
+            "issue_title": state.get("issue_title", "Unknown"),
+            "phase": current_phase,
+            "phase_name": current_phase.name
+        })
+
+    workflows.sort(key=lambda w: int(w["issue_number"]))
+    return workflows
+
+
+def display_active_workflows_table(workflows: list[dict[str, any]]):
+    """Display active workflows in a Rich table."""
+    if not workflows:
+        console.print("  [dim]◌[/] No active workflows found")
+        return
+
+    table = Table(
+        title="[bold cyan]Active Workflows[/]",
+        show_header=True,
+        header_style="bold cyan",
+        border_style="cyan"
+    )
+
+    table.add_column("Issue", style="white", width=8)
+    table.add_column("Title", style="dim", no_wrap=False)
+    table.add_column("ADW ID", style="yellow", width=10)
+    table.add_column("Phase", style="green", width=12)
+
+    phase_colors = {
+        "NOT_STARTED": "dim",
+        "PLAN": "blue",
+        "BUILD": "cyan",
+        "TEST": "yellow",
+        "REVIEW": "magenta",
+        "DOCUMENT": "white",
+        "SHIP": "green"
+    }
+
+    for wf in workflows:
+        phase_name = wf["phase_name"]
+        phase_color = phase_colors.get(phase_name, "white")
+
+        table.add_row(
+            f"#{wf['issue_number']}",
+            wf["issue_title"][:50] + "..." if len(wf["issue_title"]) > 50 else wf["issue_title"],
+            wf["adw_id"],
+            f"[{phase_color}]{phase_name}[/]"
+        )
+
+    console.print()
+    console.print(table)
+    console.print()
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
@@ -385,11 +555,14 @@ def check_config() -> list[str]:
 
 def display_header():
     repo_short = REPO_PATH.split("github.com/")[-1] if "github.com/" in REPO_PATH else REPO_PATH
+    status, sys_warnings = get_system_status_detailed()
     override_tag = " [dim][APP override][/]" if _APP_OVERRIDE_ACTIVE else ""
     channel_label = SLACK_CHANNEL_ID or "[yellow]ALL channels[/]"
     console.print(
-        f"[bold cyan]ADW Slack[/] │ [bold white]{repo_short}[/]{override_tag} │ Channel: [cyan]{channel_label}[/]"
+        f"[bold cyan]ADW Slack[/] │ [bold white]{repo_short}[/]{override_tag} │ Channel: [cyan]{channel_label}[/] │ {status}"
     )
+    for warning in sys_warnings:
+        console.print(f"  [yellow]{warning}[/]")
     for warning in check_config():
         console.print(f"  [yellow]⚠[/] {warning}")
     console.print()
@@ -417,28 +590,43 @@ def main():
     import atexit
     atexit.register(cleanup_pid)
 
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-
     display_header()
+
+    # Display active workflows status
+    active_workflows = discover_active_workflows()
+    display_active_workflows_table(active_workflows)
 
     app = App(token=SLACK_BOT_TOKEN)
 
     @app.event("message")
-    def on_message(event, say):
+    def on_message(event, say, client):
         console.print(f"  [cyan]→ message event[/] subtype={event.get('subtype')} channel={event.get('channel')} text={str(event.get('text',''))[:60]}")
         if shutdown_event.is_set():
             return
-        handle_message_event(event, say)
+        handle_message_event(event, say, client=client)
 
     @app.event("app_mention")
-    def on_mention(event, say):
+    def on_mention(event, say, client):
         console.print(f"  [cyan]→ app_mention event[/] channel={event.get('channel')} text={str(event.get('text',''))[:60]}")
         if shutdown_event.is_set():
             return
-        handle_message_event(event, say)
+        handle_message_event(event, say, client=client)
 
     handler = SocketModeHandler(app, SLACK_APP_TOKEN)
+
+    def graceful_shutdown(signum, frame):
+        """Handle SIGINT, SIGTERM, and SIGHUP — close the WebSocket cleanly."""
+        sig_name = signal.Signals(signum).name
+        console.print(f"\n  [cyan]●[/] Received {sig_name}, shutting down...")
+        shutdown_event.set()
+        try:
+            handler.close()
+        except Exception:
+            pass
+
+    signal.signal(signal.SIGINT, graceful_shutdown)
+    signal.signal(signal.SIGTERM, graceful_shutdown)
+    signal.signal(signal.SIGHUP, graceful_shutdown)
 
     console.print("  [green]✓[/] Connected to Slack — listening for messages\n")
 
@@ -450,7 +638,12 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
-        handler.close()
+        if not shutdown_event.is_set():
+            # Ctrl+C may bypass signal handler in some cases
+            try:
+                handler.close()
+            except Exception:
+                pass
         cleanup_pid()
         console.print("\n  [cyan]●[/] Shutdown complete")
 
@@ -466,6 +659,14 @@ if __name__ == "__main__":
         print("  stop     Stop a running listener")
         print("  status   Check if the listener is running")
         print("  help     Show this help message")
+        print("\nEnvironment variables:")
+        print("  SLACK_BOT_TOKEN  — xoxb-... Bot OAuth token")
+        print("  SLACK_APP_TOKEN  — xapp-... Socket Mode app-level token")
+        print("  SLACK_CHANNEL_ID — (Optional) channel to listen in")
+        print("  APP              — (Optional) target app for multi-repo workflows")
+        print("                     e.g. APP=mas resolves repo from apps/mas/adw.config.json")
+        print("\nNote: Repository is resolved from APP env var + adw.config.json,")
+        print("      falling back to git remote origin if APP is not set.")
         sys.exit(0)
 
     elif arg == "stop":

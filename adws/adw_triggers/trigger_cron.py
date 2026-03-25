@@ -6,6 +6,8 @@
 #     "python-dotenv",
 #     "pydantic",
 #     "rich",
+#     "PyJWT",
+#     "cryptography",
 # ]
 # ///
 
@@ -97,7 +99,13 @@ is_first_cycle = True
 # ============================================================================
 
 def check_github_auth() -> bool:
-    """Check if GitHub CLI is authenticated."""
+    """Check if GitHub CLI is authenticated (via App token or gh auth)."""
+    # Try GitHub App token first
+    from adw_modules.github_app_auth import get_app_token
+    if get_app_token():
+        return True
+
+    # Fall back to gh auth status
     try:
         result = subprocess.run(
             ["gh", "auth", "status"],
@@ -108,6 +116,20 @@ def check_github_auth() -> bool:
         return result.returncode == 0
     except (subprocess.TimeoutExpired, FileNotFoundError):
         return False
+
+
+def get_github_auth_label() -> str:
+    """Return a display label for the current GitHub auth method."""
+    from adw_modules.github_app_auth import get_app_token, get_app_slug
+    if get_app_token():
+        slug = get_app_slug()
+        return f"{slug}[bot]" if slug else "GitHub App [bot]"
+
+    github_pat = os.getenv("GITHUB_PAT")
+    if github_pat:
+        return "PAT"
+
+    return "gh auth"
 
 
 def check_claude_cli() -> bool:
@@ -174,7 +196,8 @@ def display_header():
     # Create compact single-line header (no box)
     labels_str = ", ".join(LABEL_WORKFLOW_MAP.keys())
     override_tag = " [dim][APP override][/]" if _APP_OVERRIDE_ACTIVE else ""
-    header_line = f"[bold cyan]ADW Cron[/] │ [bold white]{repo_short}[/]{override_tag} │ Poll: [cyan]20s[/] │ Labels: [yellow]{labels_str}[/] │ {status}"
+    auth_label = get_github_auth_label()
+    header_line = f"[bold cyan]ADW Cron[/] │ [bold white]{repo_short}[/]{override_tag} │ Poll: [cyan]20s[/] │ Labels: [yellow]{labels_str}[/] │ Auth: [green]{auth_label}[/] │ {status}"
 
     console.print(header_line)
 
@@ -258,6 +281,15 @@ def discover_active_workflows() -> list[dict[str, any]]:
 
         # Verify worktree directory actually exists on disk
         if not Path(worktree_path).exists():
+            continue
+
+        # Filter to workflows targeting the current repo
+        # When APP override is active, only show workflows that explicitly match
+        target_repo = state.get("target_repo")
+        if _APP_OVERRIDE_ACTIVE:
+            if target_repo != REPO_PATH:
+                continue
+        elif target_repo and target_repo != REPO_PATH:
             continue
 
         # Detect current phase
@@ -367,6 +399,10 @@ def should_process_issue(issue_number: int) -> tuple[bool, Optional[str], Option
                     # Check if workflow actually started
                     # Placeholder states from /report_issue have null worktree_path
                     if state.get("worktree_path") is not None:
+                        # Filter by repo when APP override is active
+                        target_repo = state.get("target_repo")
+                        if _APP_OVERRIDE_ACTIVE and target_repo != REPO_PATH:
+                            continue
                         active_workflows.append(state)
 
     if active_workflows:
@@ -560,6 +596,10 @@ def check_and_process_issues():
                             if state and state.get("issue_number") == str(issue_number):
                                 # Only count as "existing" if workflow actually started
                                 if state.get("worktree_path") is not None:
+                                    # Filter by repo when APP override is active
+                                    target_repo = state.get("target_repo")
+                                    if _APP_OVERRIDE_ACTIVE and target_repo != REPO_PATH:
+                                        continue
                                     existing_active_states.append(state)
 
                 if existing_active_states:
@@ -742,9 +782,10 @@ def main():
     active_workflows = discover_active_workflows()
     display_active_workflows_table(active_workflows)
 
-    # Set up signal handlers
+    # Set up signal handlers (SIGHUP = terminal closed)
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGHUP, signal_handler)
 
     # Schedule the check function
     schedule.every(20).seconds.do(check_and_process_issues)

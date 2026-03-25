@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run
 # /// script
-# dependencies = ["python-dotenv", "pydantic", "slack-sdk"]
+# dependencies = ["python-dotenv", "pydantic", "slack-sdk", "PyJWT", "cryptography"]
 # ///
 
 """

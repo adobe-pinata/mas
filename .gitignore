@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+*.pem
 
 # .aio contains client_secrets — each dev downloads their own
 .aio

@@ -393,6 +393,20 @@ def prompt_claude_code(request: AgentPromptRequest) -> AgentPromptResponse:
 
                 result_text = result_message.get("result", "")
 
+                # Fallback: when result is empty, extract from last assistant text message
+                # This handles cases where Claude streams output as assistant text but
+                # the result field is empty (common with slash-command JSON responses)
+                if not result_text and messages:
+                    for msg in reversed(messages):
+                        if msg.get("type") == "assistant":
+                            content = msg.get("message", {}).get("content", [])
+                            for block in reversed(content):
+                                if block.get("type") == "text" and block.get("text", "").strip():
+                                    result_text = block["text"].strip()
+                                    break
+                            if result_text:
+                                break
+
                 # For error cases, truncate the output to prevent JSONL blobs
                 if is_error and len(result_text) > 1000:
                     result_text = truncate_output(result_text, max_length=800)

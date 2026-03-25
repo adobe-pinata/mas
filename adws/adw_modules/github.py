@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run
 # /// script
-# dependencies = ["python-dotenv", "pydantic"]
+# dependencies = ["python-dotenv", "pydantic", "PyJWT", "cryptography"]
 # ///
 
 """
@@ -29,31 +29,34 @@ ADW_BOT_IDENTIFIER = "[ADW-AGENTS]"
 
 
 def get_github_env() -> Optional[dict]:
-    """Get environment with GitHub token set up. Returns None if no GITHUB_PAT.
-    
+    """Get environment with GitHub token set up.
+
+    Priority: GitHub App token > GITHUB_PAT > None (inherit parent env).
+
     Subprocess env behavior:
     - env=None → Inherits parent's environment (default)
     - env={} → Empty environment (no variables)
     - env=custom_dict → Only uses specified variables
-    
-    So this will work with gh authentication:
-    # These are equivalent:
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    result = subprocess.run(cmd, capture_output=True, text=True, env=None)
-    
-    But this will NOT work (no PATH, no auth):
-    result = subprocess.run(cmd, capture_output=True, text=True, env={})
     """
+    # 1. Try GitHub App token (posts as bot identity)
+    from .github_app_auth import get_app_token
+    app_token = get_app_token()
+    if app_token:
+        return {
+            "GH_TOKEN": app_token,
+            "PATH": os.environ.get("PATH", ""),
+        }
+
+    # 2. Fall back to personal access token
     github_pat = os.getenv("GITHUB_PAT")
-    if not github_pat:
-        return None
-    
-    # Only create minimal env with GitHub token
-    env = {
-        "GH_TOKEN": github_pat,
-        "PATH": os.environ.get("PATH", ""),
-    }
-    return env
+    if github_pat:
+        return {
+            "GH_TOKEN": github_pat,
+            "PATH": os.environ.get("PATH", ""),
+        }
+
+    # 3. No token — inherit parent env (relies on gh auth login)
+    return None
 
 
 def get_repo_url() -> str:
