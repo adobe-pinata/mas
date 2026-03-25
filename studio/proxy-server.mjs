@@ -37,11 +37,11 @@ if (keyPath && certPath) {
 
     server = createHttpsServer(httpsOptions, requestHandler);
     serverProtocol = 'https';
-    serverPort = 8443; // Use 8443 for HTTPS
+    serverPort = parseInt(process.env.PORT || process.env.BACKEND_PORT || '8443', 10);
 } else {
     server = createHttpServer(requestHandler);
     serverProtocol = 'http';
-    serverPort = 8080; // Use 8080 for HTTP
+    serverPort = parseInt(process.env.PORT || process.env.BACKEND_PORT || '8080', 10);
 }
 
 // Common request handler
