@@ -256,6 +256,8 @@ merch-sidenav.plans {
 merch-card-collection-header.plans {
     --merch-card-collection-header-columns: 1fr fit-content(100%);
     --merch-card-collection-header-areas: "result filter";
+    --merch-card-collection-header-filter-height: 66px;
+    --merch-card-collection-header-search-min-height: 66px;
 }
 
 .one-merch-card.plans,
