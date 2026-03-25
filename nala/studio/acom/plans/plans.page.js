@@ -32,7 +32,7 @@ export default class ACOMPlansCardPage {
         this.individualsCSSProp = {
             card: {
                 'background-color': 'rgb(245, 199, 0)',
-                'background-image': 'linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)), none',
+                'background-image': 'linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255))',
             },
             icon: {
                 width: '41.5px',
