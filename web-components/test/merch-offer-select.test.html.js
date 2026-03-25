@@ -194,6 +194,23 @@ runTests(async () => {
         });
     });
 
+    describe('merch-offer-select savings badge', async () => {
+        it('should render savings badge when ABM and M2M offers are both present', async () => {
+            const { merchOfferSelect } = await renderCard('card-savings');
+            await delay(200);
+            const badge = merchOfferSelect.shadowRoot.querySelector('.savings-badge');
+            expect(badge).to.exist;
+            expect(badge.textContent.trim()).to.equal('Save 33% with annual');
+        });
+
+        it('should not render savings badge when only one offer type is present', async () => {
+            const { merchOfferSelect } = await renderCard('mwebCard');
+            await delay(200);
+            const badge = merchOfferSelect.shadowRoot.querySelector('.savings-badge');
+            expect(badge).to.not.exist;
+        });
+    });
+
     describe('merch-offer-select with mini-compare-chart-mweb', () => {
         it('should recognize mini-compare-chart-mweb as miniCompareMobileCard on mobile', async () => {
             await toggleMobile();

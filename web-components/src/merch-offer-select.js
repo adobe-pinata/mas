@@ -1,4 +1,4 @@
-import { css, html, LitElement } from 'lit';
+import { css, html, LitElement, nothing } from 'lit';
 import {
     EVENT_MERCH_OFFER_READY,
     EVENT_MERCH_OFFER_SELECT_READY,
@@ -26,6 +26,17 @@ class MerchOfferSelect extends LitElement {
             flex-direction: column;
             gap: var(--consonant-merch-spacing-xs);
         }
+
+        :host .savings-badge {
+            display: inline-block;
+            margin-top: var(--consonant-merch-spacing-xxs, 4px);
+            padding: 2px 8px;
+            border-radius: 4px;
+            background-color: var(--spectrum-green-400, #2d9d78);
+            color: #fff;
+            font-size: var(--consonant-merch-card-body-xs-font-size, 12px);
+            line-height: 1.5;
+        }
     `;
 
     static properties = {
@@ -35,6 +46,7 @@ class MerchOfferSelect extends LitElement {
         variant: { type: String, attribute: 'variant', reflect: true },
         planType: { type: String, attribute: 'plan-type', reflect: true },
         stock: { type: Boolean, reflect: true },
+        savingsBadge: { type: String },
     };
 
     #handleOfferSelectionByQuantityFn;
@@ -158,8 +170,25 @@ class MerchOfferSelect extends LitElement {
         this.updateBadgeText(container);
     }
 
+    computeSavingsBadge() {
+        const abmOffer = this.offers.find((o) => o.planType === 'ABM');
+        const m2mOffer = this.offers.find((o) => o.planType === 'M2M');
+        if (!abmOffer || !m2mOffer) return null;
+        const abmPrice = abmOffer.price?.value?.[0]?.priceDetails?.price;
+        const m2mPrice = m2mOffer.price?.value?.[0]?.priceDetails?.price;
+        if (!abmPrice || !m2mPrice || abmPrice >= m2mPrice) return null;
+        const savings = Math.round((1 - abmPrice / m2mPrice) * 100);
+        if (savings <= 0) return null;
+        return `Save ${savings}% with annual`;
+    }
+
     render() {
-        return html`<fieldset><slot class="${this.variant}"></slot></fieldset>`;
+        return html`
+            <fieldset><slot class="${this.variant}"></slot></fieldset>
+            ${this.savingsBadge
+                ? html`<div class="savings-badge">${this.savingsBadge}</div>`
+                : nothing}
+        `;
     }
 
     connectedCallback() {
@@ -261,6 +290,7 @@ class MerchOfferSelect extends LitElement {
         this.dispatchEvent(
             new CustomEvent(EVENT_MERCH_OFFER_SELECT_READY, { bubbles: true }),
         );
+        this.savingsBadge = this.computeSavingsBadge();
     }
 }
 
