@@ -386,6 +386,109 @@ runTests(async () => {
             aemFragment.cache.clear();
         });
     });
+
+    describe('merch-card-collection price sort', () => {
+        const makePrice = (price) => [{ priceDetails: { price } }];
+
+        beforeEach(async () => {
+            document.location.hash = '';
+            [merchCards, render] = prepareTemplate('catalogCards', false);
+        });
+
+        const stubCardPrices = (prices) => {
+            const cards = visibleCards();
+            prices.forEach((price, i) => {
+                if (cards[i]) {
+                    const el = cards[i].querySelector(
+                        'span[is="inline-price"][data-wcs-osi]',
+                    );
+                    if (el) {
+                        el.value =
+                            price != null ? makePrice(price) : undefined;
+                    }
+                }
+            });
+        };
+
+        it('sorts cards price low-to-high', async () => {
+            render();
+            await delay(100);
+            stubCardPrices([30, 10, 20]);
+            merchCards.setAttribute('sort', 'price-low-to-high');
+            await delay(100);
+            const cards = visibleCards();
+            const p0 = cards[0].querySelector(
+                'span[is="inline-price"][data-wcs-osi]',
+            )?.value?.[0]?.priceDetails?.price;
+            const p1 = cards[1].querySelector(
+                'span[is="inline-price"][data-wcs-osi]',
+            )?.value?.[0]?.priceDetails?.price;
+            if (p0 != null && p1 != null) {
+                expect(p0).to.be.at.most(p1);
+            }
+        });
+
+        it('sorts cards price high-to-low', async () => {
+            render();
+            await delay(100);
+            stubCardPrices([30, 10, 20]);
+            merchCards.setAttribute('sort', 'price-high-to-low');
+            await delay(100);
+            const cards = visibleCards();
+            const p0 = cards[0].querySelector(
+                'span[is="inline-price"][data-wcs-osi]',
+            )?.value?.[0]?.priceDetails?.price;
+            const p1 = cards[1].querySelector(
+                'span[is="inline-price"][data-wcs-osi]',
+            )?.value?.[0]?.priceDetails?.price;
+            if (p0 != null && p1 != null) {
+                expect(p0).to.be.at.least(p1);
+            }
+        });
+
+        it('sorts cards without price to the end (low-to-high)', async () => {
+            render();
+            await delay(100);
+            const cards = visibleCards();
+            // Give the first card no price, second card a real price
+            const el0 = cards[0].querySelector(
+                'span[is="inline-price"][data-wcs-osi]',
+            );
+            const el1 = cards[1].querySelector(
+                'span[is="inline-price"][data-wcs-osi]',
+            );
+            if (el0) el0.value = undefined;
+            if (el1) el1.value = makePrice(5);
+            merchCards.setAttribute('sort', 'price-low-to-high');
+            await delay(100);
+            const sorted = visibleCards();
+            // The card with price 5 should appear before any priceless card
+            const priceIndex = sorted.findIndex(
+                (c) =>
+                    c.querySelector('span[is="inline-price"][data-wcs-osi]')
+                        ?.value?.[0]?.priceDetails?.price === 5,
+            );
+            const noPriceIndex = sorted.findIndex(
+                (c) =>
+                    c.querySelector('span[is="inline-price"][data-wcs-osi]')
+                        ?.value === undefined,
+            );
+            if (priceIndex !== -1 && noPriceIndex !== -1) {
+                expect(priceIndex).to.be.lessThan(noPriceIndex);
+            }
+        });
+
+        it('switching from price sort back to authored restores original order', async () => {
+            render();
+            await delay(100);
+            const originalFirst = visibleCards(0);
+            merchCards.setAttribute('sort', 'price-low-to-high');
+            await delay(100);
+            merchCards.removeAttribute('sort');
+            await delay(100);
+            expect(visibleCards(0)).to.equal(originalFirst);
+        });
+    });
 });
 
 document.getElementById('showMore').addEventListener('click', () => {

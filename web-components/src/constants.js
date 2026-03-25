@@ -177,6 +177,8 @@ export const FF_ANNUAL_PRICE = 'mas-ff-annual-price';
 export const SORT_ORDER = {
     alphabetical: 'alphabetical',
     authored: 'authored',
+    priceLowToHigh: 'price-low-to-high',
+    priceHighToLow: 'price-high-to-low',
 };
 
 export const SUPPORTED_COUNTRIES = [

@@ -79,6 +79,27 @@ const authoredSorter = (elements, { filter }) =>
         return a.filters[filter].order - b.filters[filter].order;
     });
 
+const getCardPrice = (card) => {
+    const price = card
+        .querySelector('span[is="inline-price"][data-wcs-osi]')
+        ?.value?.[0]?.priceDetails?.price;
+    return typeof price === 'number' && !isNaN(price) ? price : null;
+};
+
+const priceLowToHighSorter = (elements) =>
+    elements.sort((a, b) => {
+        const pa = getCardPrice(a) ?? Infinity;
+        const pb = getCardPrice(b) ?? Infinity;
+        return pa - pb;
+    });
+
+const priceHighToLowSorter = (elements) =>
+    elements.sort((a, b) => {
+        const pa = getCardPrice(a) ?? -Infinity;
+        const pb = getCardPrice(b) ?? -Infinity;
+        return pb - pa;
+    });
+
 const searcher = (elements, { search }) => {
     if (search?.length) {
         search = search.toLowerCase();
@@ -172,10 +193,12 @@ export class MerchCardCollection extends LitElement {
             });
         }
 
-        const sorter =
-            this.sort === SORT_ORDER.alphabetical
-                ? alphabeticalSorter
-                : authoredSorter;
+        const SORTERS = {
+            [SORT_ORDER.alphabetical]: alphabeticalSorter,
+            [SORT_ORDER.priceLowToHigh]: priceLowToHighSorter,
+            [SORT_ORDER.priceHighToLow]: priceHighToLowSorter,
+        };
+        const sorter = SORTERS[this.sort] ?? authoredSorter;
         const reducers = [categoryFilter, typeFilter, searcher, sorter];
 
         let result = reducers
@@ -865,7 +888,15 @@ export default class MerchCardCollectionHeader extends LitElement {
         const alphabeticallyText = getSlotText(this, 'alphabeticallyText');
 
         if (!(popularityText && alphabeticallyText)) return;
-        const alphabetical = this.collection?.sort === SORT_ORDER.alphabetical;
+        const priceLowToHighText = getSlotText(this, 'priceLowToHighText');
+        const priceHighToLowText = getSlotText(this, 'priceHighToLowText');
+
+        const currentSortLabel =
+            {
+                [SORT_ORDER.alphabetical]: alphabeticallyText,
+                [SORT_ORDER.priceLowToHigh]: priceLowToHighText,
+                [SORT_ORDER.priceHighToLow]: priceHighToLowText,
+            }[this.collection?.sort] ?? popularityText;
 
         return html`
             <sp-action-menu
@@ -873,13 +904,10 @@ export default class MerchCardCollectionHeader extends LitElement {
                 size="m"
                 @change="${this.collection?.sortChanged}"
                 selects="single"
-                value="${alphabetical
-                    ? SORT_ORDER.alphabetical
-                    : SORT_ORDER.authored}"
+                value="${this.collection?.sort ?? SORT_ORDER.authored}"
             >
                 <span slot="label-only"
-                    >${sortText}:
-                    ${alphabetical ? alphabeticallyText : popularityText}</span
+                    >${sortText}: ${currentSortLabel}</span
                 >
                 <sp-menu-item value="${SORT_ORDER.authored}"
                     >${popularityText}</sp-menu-item
@@ -887,6 +915,16 @@ export default class MerchCardCollectionHeader extends LitElement {
                 <sp-menu-item value="${SORT_ORDER.alphabetical}"
                     >${alphabeticallyText}</sp-menu-item
                 >
+                ${priceLowToHighText
+                    ? html`<sp-menu-item value="${SORT_ORDER.priceLowToHigh}"
+                          >${priceLowToHighText}</sp-menu-item
+                      >`
+                    : nothing}
+                ${priceHighToLowText
+                    ? html`<sp-menu-item value="${SORT_ORDER.priceHighToLow}"
+                          >${priceHighToLowText}</sp-menu-item
+                      >`
+                    : nothing}
             </sp-action-menu>
         `;
     }
