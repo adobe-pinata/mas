@@ -35,9 +35,11 @@ import re
 import signal
 import subprocess
 import sys
+import threading
 import time
+from collections import OrderedDict
 from pathlib import Path
-from typing import Optional, Set
+from typing import Optional
 
 from dotenv import load_dotenv
 from rich.console import Console
@@ -72,13 +74,16 @@ _APP_OVERRIDE_ACTIVE = get_app_name() not in (None, "")
 # ─── State ───────────────────────────────────────────────────────────────────
 
 # Track message timestamps already acted on (dedup within a session)
-processed_messages: Set[str] = set()
+# Bounded OrderedDict used as LRU set; evicts oldest entries above MAX_PROCESSED_CACHE
+MAX_PROCESSED_CACHE = 10_000
+processed_messages: OrderedDict = OrderedDict()
+_lock = threading.Lock()
 
 # Ignore messages older than this many seconds on startup (avoid replaying history)
-STARTUP_IGNORE_AGE_SECS = 60
+STARTUP_IGNORE_AGE_SECS = 300
 
-# Graceful shutdown flag
-shutdown_requested = False
+# Graceful shutdown event (thread-safe)
+shutdown_event = threading.Event()
 
 console = Console()
 
@@ -123,7 +128,7 @@ def parse_slack_intent(text: str) -> Optional[dict]:
 # ─── Prompt Optimizer ─────────────────────────────────────────────────────────
 
 def generate_optimized_spec(text: str) -> Optional[str]:
-    """Use /prompt-optizer (Opus) to generate a structured spec from a Slack message.
+    """Use /prompt-optimizer (Opus) to generate a structured spec from a Slack message.
 
     Returns the raw prompt optimizer output (with <Inputs>, <Instructions> sections),
     or None on failure.
@@ -201,10 +206,14 @@ def handle_message_event(event: dict, say) -> None:
         console.print("  [dim]◌ skipped: thread reply[/]")
         return
 
-    # Deduplication
-    if ts in processed_messages:
-        console.print("  [dim]◌ skipped: already processed[/]")
-        return
+    # Deduplication (thread-safe: check and mark atomically to prevent concurrent double-processing)
+    with _lock:
+        if ts in processed_messages:
+            console.print("  [dim]◌ skipped: already processed[/]")
+            return
+        processed_messages[ts] = None
+        if len(processed_messages) > MAX_PROCESSED_CACHE:
+            processed_messages.popitem(last=False)
 
     # Ignore messages older than STARTUP_IGNORE_AGE_SECS (avoid replaying history)
     try:
@@ -219,9 +228,6 @@ def handle_message_event(event: dict, say) -> None:
     text = re.sub(r"<@[A-Z0-9]+>", "", event.get("text", "")).strip()
     if not text:
         return
-
-    # Mark as seen before any async work to prevent double-processing
-    processed_messages.add(ts)
 
     repo_short = REPO_PATH.split("github.com/")[-1] if "github.com/" in REPO_PATH else REPO_PATH
     console.print(f"\n  [cyan]●[/] Incoming message: [italic]{text[:80]}[/]")
@@ -359,9 +365,8 @@ def show_status():
 # ─── Signal Handlers ─────────────────────────────────────────────────────────
 
 def signal_handler(signum, frame):
-    global shutdown_requested
     console.print(f"\n  [cyan]●[/] Received signal {signum}, shutting down...")
-    shutdown_requested = True
+    shutdown_event.set()
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
@@ -422,14 +427,14 @@ def main():
     @app.event("message")
     def on_message(event, say):
         console.print(f"  [cyan]→ message event[/] subtype={event.get('subtype')} channel={event.get('channel')} text={str(event.get('text',''))[:60]}")
-        if shutdown_requested:
+        if shutdown_event.is_set():
             return
         handle_message_event(event, say)
 
     @app.event("app_mention")
     def on_mention(event, say):
         console.print(f"  [cyan]→ app_mention event[/] channel={event.get('channel')} text={str(event.get('text',''))[:60]}")
-        if shutdown_requested:
+        if shutdown_event.is_set():
             return
         handle_message_event(event, say)
 
@@ -440,7 +445,7 @@ def main():
     try:
         handler.start()
         # handler.start() blocks; the loop below only runs if it exits cleanly
-        while not shutdown_requested:
+        while not shutdown_event.is_set():
             time.sleep(1)
     except KeyboardInterrupt:
         pass
@@ -471,5 +476,10 @@ if __name__ == "__main__":
         show_status()
         sys.exit(0)
 
-    else:
+    elif arg is None:
         main()
+
+    else:
+        console.print(f"[red]Unknown command:[/] {arg}")
+        console.print("Use --help for usage information.")
+        sys.exit(1)
