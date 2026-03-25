@@ -22,6 +22,7 @@ import {
     EVENT_MAS_READY,
     EVENT_AEM_ERROR,
     EVENT_MAS_ERROR,
+    EVENT_TYPE_RESOLVED,
     SELECTOR_MAS_CHECKOUT_LINK,
     SELECTOR_MAS_ELEMENT,
     SELECTOR_MAS_INLINE_PRICE,
@@ -218,6 +219,12 @@ export class MerchCard extends LitElement {
     #hydrationPromise = new Promise((resolve) => {
         this.#resolveHydration = resolve;
     });
+    #updateEntitlementAttributes = () => {
+        const link = this.checkoutLinks[0];
+        if (!link?.options) return;
+        this.toggleAttribute('entitled', !!link.options.entitlement);
+        this.toggleAttribute('upgrade', !!link.options.upgrade);
+    };
 
     customerSegment;
     marketSegment;
@@ -569,6 +576,10 @@ export class MerchCard extends LitElement {
         this.addEventListener(EVENT_AEM_LOAD, this.handleAemFragmentEvents);
         this.addEventListener(EVENT_MAS_READY, this.handleInfoIconEvents);
         this.addEventListener('change', this.changeHandler);
+        this.addEventListener(
+            EVENT_TYPE_RESOLVED,
+            this.#updateEntitlementAttributes,
+        );
 
         if (this.variantLayout) {
             this.variantLayout.connectedCallbackHook();
@@ -594,6 +605,10 @@ export class MerchCard extends LitElement {
         this.removeEventListener(
             EVENT_MERCH_ADDON_AND_QUANTITY_UPDATE,
             this.handleAddonAndQuantityUpdate,
+        );
+        this.removeEventListener(
+            EVENT_TYPE_RESOLVED,
+            this.#updateEntitlementAttributes,
         );
     }
 
