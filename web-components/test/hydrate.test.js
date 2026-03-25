@@ -282,6 +282,99 @@ describe('processCTAs', async () => {
         expect(link.tagName.toLowerCase()).to.equal('a');
         expect(link.getAttribute('is')).to.be.null;
     });
+
+    it('should filter trial CTAs on a plans variant', async () => {
+        const fields = {
+            ctas: '<a is="checkout-link" data-wcs-osi="abm" data-analytics-id="free-trial" class="accent">Free Trial</a>',
+        };
+        processCTAs(fields, merchCard, aemFragmentMapping, 'plans');
+        const footer = getFooterElement(merchCard);
+        expect(footer).to.exist;
+        expect(footer.children).to.have.lengthOf(0);
+    });
+
+    it('should preserve non-trial CTAs while filtering trial CTAs on plans variant', async () => {
+        const fields = {
+            ctas: `<a is="checkout-link" data-wcs-osi="abm" data-analytics-id="free-trial" class="accent">Free Trial</a>
+            <a is="checkout-link" data-wcs-osi="abm" data-analytics-id="buy-now" class="accent">Buy Now</a>`,
+        };
+        processCTAs(fields, merchCard, aemFragmentMapping, 'plans');
+        const footer = getFooterElement(merchCard);
+        expect(footer).to.exist;
+        expect(footer.children).to.have.lengthOf(1);
+        expect(footer.children[0].textContent).to.equal('Buy Now');
+    });
+
+    it('should not filter trial CTAs on a non-plans variant', async () => {
+        const fields = {
+            ctas: '<a is="checkout-link" data-wcs-osi="abm" data-analytics-id="free-trial" class="accent">Free Trial</a>',
+        };
+        processCTAs(fields, merchCard, aemFragmentMapping, 'ccd-slice');
+        const footer = getFooterElement(merchCard);
+        expect(footer).to.exist;
+        expect(footer.children).to.have.lengthOf(1);
+    });
+
+    it('should result in empty footer when all CTAs are filtered on plans-v2 variant', async () => {
+        const fields = {
+            ctas: `<a is="checkout-link" data-wcs-osi="abm" data-analytics-id="free-trial" class="accent">Free Trial</a>
+            <a is="checkout-link" data-wcs-osi="abm" data-analytics-id="seven-day-trial" class="accent">Seven Day Trial</a>`,
+        };
+        processCTAs(fields, merchCard, aemFragmentMapping, 'plans-v2');
+        const footer = getFooterElement(merchCard);
+        expect(footer).to.exist;
+        expect(footer.children).to.have.lengthOf(0);
+    });
+
+    it('should filter trial CTAs on plans-education variant', async () => {
+        const fields = {
+            ctas: '<a is="checkout-link" data-wcs-osi="abm" data-analytics-id="free-trial" class="accent">Free Trial</a>',
+        };
+        processCTAs(fields, merchCard, aemFragmentMapping, 'plans-education');
+        const footer = getFooterElement(merchCard);
+        expect(footer).to.exist;
+        expect(footer.children).to.have.lengthOf(0);
+    });
+
+    it('should filter trial CTAs on plans-students variant', async () => {
+        const fields = {
+            ctas: '<a is="checkout-link" data-wcs-osi="abm" data-analytics-id="free-trial" class="accent">Free Trial</a>',
+        };
+        processCTAs(fields, merchCard, aemFragmentMapping, 'plans-students');
+        const footer = getFooterElement(merchCard);
+        expect(footer).to.exist;
+        expect(footer.children).to.have.lengthOf(0);
+    });
+
+    it('should filter start-free-trial analytics ID on plans variant', async () => {
+        const fields = {
+            ctas: '<a is="checkout-link" data-wcs-osi="abm" data-analytics-id="start-free-trial" class="accent">Start Free Trial</a>',
+        };
+        processCTAs(fields, merchCard, aemFragmentMapping, 'plans');
+        const footer = getFooterElement(merchCard);
+        expect(footer).to.exist;
+        expect(footer.children).to.have.lengthOf(0);
+    });
+
+    it('should filter fourteen-day-trial analytics ID on plans variant', async () => {
+        const fields = {
+            ctas: '<a is="checkout-link" data-wcs-osi="abm" data-analytics-id="fourteen-day-trial" class="accent">14-Day Trial</a>',
+        };
+        processCTAs(fields, merchCard, aemFragmentMapping, 'plans');
+        const footer = getFooterElement(merchCard);
+        expect(footer).to.exist;
+        expect(footer.children).to.have.lengthOf(0);
+    });
+
+    it('should filter thirty-day-trial analytics ID on plans variant', async () => {
+        const fields = {
+            ctas: '<a is="checkout-link" data-wcs-osi="abm" data-analytics-id="thirty-day-trial" class="accent">30-Day Trial</a>',
+        };
+        processCTAs(fields, merchCard, aemFragmentMapping, 'plans');
+        const footer = getFooterElement(merchCard);
+        expect(footer).to.exist;
+        expect(footer.children).to.have.lengthOf(0);
+    });
 });
 
 describe('processSubtitle', () => {

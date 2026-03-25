@@ -12,6 +12,14 @@ export const ANALYTICS_LINK_ATTR = 'daa-ll';
 export const ANALYTICS_SECTION_ATTR = 'daa-lh';
 const SPECTRUM_BUTTON_SIZES = ['XL', 'L', 'M', 'S'];
 const TEXT_TRUNCATE_SUFFIX = '...';
+const FREE_TRIAL_CTA_IDS = new Set([
+    'free-trial',
+    'start-free-trial',
+    'seven-day-trial',
+    'fourteen-day-trial',
+    'thirty-day-trial',
+]);
+const PLANS_VARIANTS = new Set(['plans', 'plans-education', 'plans-students', 'plans-v2']);
 
 /**
  * Normalizes variant names for consistency.
@@ -687,7 +695,13 @@ export function processCTAs(fields, merchCard, aemFragmentMapping, variant) {
 
         const { slot } = aemFragmentMapping.ctas;
         const footer = createTag('div', { slot }, fields.ctas);
-        const ctas = [...footer.querySelectorAll('a')].map((cta) =>
+        let ctas = [...footer.querySelectorAll('a')];
+        if (PLANS_VARIANTS.has(variant)) {
+            ctas = ctas.filter(
+                (cta) => !FREE_TRIAL_CTA_IDS.has(cta.dataset.analyticsId),
+            );
+        }
+        ctas = ctas.map((cta) =>
             transformLinkToButton(cta, merchCard, aemFragmentMapping),
         );
 
