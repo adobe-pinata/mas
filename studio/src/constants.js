@@ -156,8 +156,10 @@ export const TAG_MODEL_ID_MAPPING = {
 export const EDITABLE_FRAGMENT_MODEL_IDS = Object.values(TAG_MODEL_ID_MAPPING);
 
 // The first value in the array should be the default value
+// null as first element means no sort applied by default (preserves server-side order)
 export const SORT_COLUMNS = {
     placeholders: ['key', 'value', 'status', 'locale', 'updatedBy', 'updatedAt'],
+    content: [null, 'title', 'modifiedAt'],
 };
 
 // Variant capabilities configuration

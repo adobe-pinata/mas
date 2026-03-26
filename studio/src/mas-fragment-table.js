@@ -212,6 +212,9 @@ class MasFragmentTable extends LitElement {
                 </sp-table-cell>
                 <sp-table-cell class="offer-type">${this.offerData?.offerType}</sp-table-cell>
                 <sp-table-cell class="last-modified-by">${data.modified?.by}</sp-table-cell>
+                <sp-table-cell class="last-modified">
+                    ${data.modified?.at ? new Date(data.modified.at).toLocaleString() : ''}
+                </sp-table-cell>
                 <sp-table-cell class="price">${this.price}</sp-table-cell>
                 <sp-table-cell class="status ${data.status?.toLowerCase()}-cell"
                     ><div class="status-dot"></div>
