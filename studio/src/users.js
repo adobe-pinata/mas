@@ -28,15 +28,6 @@ export async function initUsers() {
         const uniqueEditors = await loadUsers();
         Store.users.set(uniqueEditors);
 
-        Store.search.subscribe(async ({ path }) => {
-            if (path !== 'sandbox') return;
-            Store.createdByUsers.set([
-                {
-                    displayName: profile.displayName,
-                    userPrincipalName: profile.email,
-                },
-            ]);
-        });
     } catch (e) {
         console.error('Error initializing users', e);
         Store.users.set([]);
