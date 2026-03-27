@@ -1061,6 +1061,128 @@ describe('MasRepository dictionary helpers', () => {
                 Store.fragments.list.data = originalData;
             }
         });
+
+        it('searches without fullText and filters by title client-side when query is provided', async () => {
+            const repository = createFullRepository();
+            repository.page = { value: PAGE_NAMES.CONTENT };
+            repository.search = { value: { path: 'acom', query: 'Photoshop' } };
+            repository.filters = { value: { locale: 'en_US', tags: '' } };
+            const titleMatchFragment = createFragment({
+                id: 'frag-title-match',
+                path: `${ROOT_PATH}/acom/en_US/photoshop-card`,
+                title: 'Photoshop CC Card',
+                fields: [{ name: 'variant', values: ['ccd-action'] }],
+            });
+            const noMatchFragment = createFragment({
+                id: 'frag-no-match',
+                path: `${ROOT_PATH}/acom/en_US/illustrator-card`,
+                title: 'Illustrator Card',
+                fields: [{ name: 'variant', values: ['ccd-action'] }],
+            });
+            const contentMatchFragment = createFragment({
+                id: 'frag-content-match',
+                path: `${ROOT_PATH}/acom/en_US/acrobat-card`,
+                title: 'Acrobat Card',
+                fields: [{ name: 'description', values: ['Buy Photoshop today'] }],
+            });
+            const mockCursor = {
+                [Symbol.asyncIterator]: async function* () {
+                    yield {
+                        [Symbol.asyncIterator]: async function* () {
+                            for (const fragment of [titleMatchFragment, noMatchFragment, contentMatchFragment]) {
+                                yield fragment;
+                            }
+                        },
+                    };
+                },
+            };
+            const searchStub = sandbox.stub().resolves(mockCursor);
+            repository.aem = createAemMock({
+                fragments: {
+                    search: searchStub,
+                },
+            });
+            const { default: Store } = await import('../src/store.js');
+            const originalProfile = Store.profile.value;
+            Store.profile.set({ name: 'test-user' });
+            Store.createdByUsers.set([]);
+            const setResults = [];
+            const mockDataStore = {
+                get: sandbox.stub().returns([]),
+                getMeta: sandbox.stub().returns(null),
+                set: sandbox.stub().callsFake((data) => setResults.push(data)),
+                setMeta: sandbox.stub(),
+            };
+            const originalData = Store.fragments.list.data;
+            Store.fragments.list.data = mockDataStore;
+            try {
+                await repository.searchFragments();
+                // AEM search should be called WITHOUT fullText (query overridden to '')
+                expect(searchStub.calledOnce).to.be.true;
+                const searchOptions = searchStub.firstCall.args[0];
+                expect(searchOptions.query).to.equal('');
+                // dataStore.set should have been called with only matching fragments
+                expect(setResults.length).to.be.greaterThan(0);
+                const lastSet = setResults[setResults.length - 1];
+                const ids = lastSet.map((s) => s.value?.id);
+                expect(ids).to.include('frag-title-match');
+                expect(ids).to.include('frag-content-match');
+                expect(ids).to.not.include('frag-no-match');
+            } finally {
+                Store.profile.set(originalProfile);
+                Store.fragments.list.data = originalData;
+            }
+        });
+
+        it('does not apply client-side filter when query is empty', async () => {
+            const repository = createFullRepository();
+            repository.page = { value: PAGE_NAMES.CONTENT };
+            repository.search = { value: { path: 'acom', query: '' } };
+            repository.filters = { value: { locale: 'en_US', tags: '' } };
+            const frag1 = createFragment({ id: 'frag-1', path: `${ROOT_PATH}/acom/en_US/frag1`, title: 'Alpha Card', fields: [] });
+            const frag2 = createFragment({ id: 'frag-2', path: `${ROOT_PATH}/acom/en_US/frag2`, title: 'Beta Card', fields: [] });
+            const mockCursor = {
+                [Symbol.asyncIterator]: async function* () {
+                    yield {
+                        [Symbol.asyncIterator]: async function* () {
+                            for (const fragment of [frag1, frag2]) {
+                                yield fragment;
+                            }
+                        },
+                    };
+                },
+            };
+            const searchStub = sandbox.stub().resolves(mockCursor);
+            repository.aem = createAemMock({
+                fragments: {
+                    search: searchStub,
+                },
+            });
+            const { default: Store } = await import('../src/store.js');
+            const originalProfile = Store.profile.value;
+            Store.profile.set({ name: 'test-user' });
+            Store.createdByUsers.set([]);
+            const setResults = [];
+            const mockDataStore = {
+                get: sandbox.stub().returns([]),
+                getMeta: sandbox.stub().returns(null),
+                set: sandbox.stub().callsFake((data) => setResults.push(data)),
+                setMeta: sandbox.stub(),
+            };
+            const originalData = Store.fragments.list.data;
+            Store.fragments.list.data = mockDataStore;
+            try {
+                await repository.searchFragments();
+                // No filter applied — all fragments should be present
+                const lastSet = setResults[setResults.length - 1];
+                const ids = lastSet.map((s) => s.value?.id);
+                expect(ids).to.include('frag-1');
+                expect(ids).to.include('frag-2');
+            } finally {
+                Store.profile.set(originalProfile);
+                Store.fragments.list.data = originalData;
+            }
+        });
     });
 
     describe('parseVariationAlreadyExistsPath', () => {

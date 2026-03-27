@@ -348,7 +348,11 @@ export class MasRepository extends LitElement {
                     }
                 }
             } else {
-                const cursor = await this.aem.sites.cf.fragments.search(localSearch, null, this.#abortControllers.search);
+                // When a query is present, load all fragments without the fullText filter so
+                // that title-based matching can be applied client-side. AEM CF fullText only
+                // indexes content field values, not the JCR title property.
+                const searchOptions = query ? { ...localSearch, query: '' } : localSearch;
+                const cursor = await this.aem.sites.cf.fragments.search(searchOptions, null, this.#abortControllers.search);
                 const fragmentStores = [];
                 // Extract surface from path for corrector
                 const surface = path?.split('/').filter(Boolean)[0]?.toLowerCase();
@@ -361,7 +365,23 @@ export class MasRepository extends LitElement {
                         const sourceStore = generateFragmentStore(fragment);
                         fragmentStores.push(sourceStore);
                     }
-                    dataStore.set([...fragmentStores]);
+                    if (query) {
+                        const q = query.toLowerCase();
+                        dataStore.set(
+                            fragmentStores.filter((store) => {
+                                const frag = store.value;
+                                if (!frag) return false;
+                                if ((frag.title || '').toLowerCase().includes(q)) return true;
+                                return frag.fields?.some(
+                                    (f) =>
+                                        Array.isArray(f.values) &&
+                                        f.values.some((v) => String(v ?? '').toLowerCase().includes(q)),
+                                );
+                            }),
+                        );
+                    } else {
+                        dataStore.set([...fragmentStores]);
+                    }
                     Store.fragments.list.firstPageLoaded.set(true);
                 }
             }
