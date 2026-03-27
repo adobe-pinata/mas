@@ -189,6 +189,26 @@
                         expect(tagLabels).to.not.include('DRAFT');
                     });
 
+                    it('Reset Filters button should not be visible when no filters are active', async function () {
+                        const filterPanel = initElementFromTemplate('filterPanel1', this.test.title);
+                        await filterPanel.updateComplete;
+
+                        const resetButton = filterPanel.shadowRoot.querySelector('sp-action-button');
+                        expect(resetButton).to.be.null;
+                    });
+
+                    it('Reset Filters button should appear when a filter is applied', async function () {
+                        const filterPanel = initElementFromTemplate('filterPanel1', this.test.title);
+                        await filterPanel.updateComplete;
+
+                        const statusPicker = filterPanel.shadowRoot.querySelector('aem-tag-picker-field[top="status"]');
+                        await statusPicker.toggleTag('/content/cq:tags/mas/status/draft');
+                        await filterPanel.updateComplete;
+
+                        const resetButton = filterPanel.shadowRoot.querySelector('sp-action-button');
+                        expect(resetButton).to.not.be.null;
+                    });
+
                     it('Should initialize filters from search state', async function () {
                         // Set initial search state
                         Store.filters.set({

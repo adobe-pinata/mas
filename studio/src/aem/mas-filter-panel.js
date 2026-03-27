@@ -56,6 +56,13 @@ class MasFilterPanel extends LitElement {
             stroke: var(--spectrum-neutral-content-color-default);
             stroke-width: 3px;
         }
+
+        #active-filters {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
     `;
 
     reactiveController = new ReactiveController(this, [Store.profile, Store.createdByUsers, Store.users]);
@@ -207,6 +214,12 @@ class MasFilterPanel extends LitElement {
         Store.createdByUsers.set(Store.createdByUsers.value.filter((user) => user.userPrincipalName !== value));
     }
 
+    get hasActiveFilters() {
+        const hasTagFilters = Object.values(this.tagsByType).some((arr) => arr.length > 0);
+        const hasUserFilters = Store.createdByUsers.value.length > 0;
+        return hasTagFilters || hasUserFilters;
+    }
+
     get createdByUsersTags() {
         return repeat(
             Store.createdByUsers.value,
@@ -311,25 +324,36 @@ class MasFilterPanel extends LitElement {
                     .users=${Store.users}
                 ></mas-user-picker>
 
-                <sp-action-button quiet @click=${this.#handleRefresh} title="Clear all filters"
-                    >Reset Filters
-                    <sp-icon-refresh slot="icon"></sp-icon-refresh>
-                </sp-action-button>
             </div>
-            <sp-tags>
-                ${repeat(
-                    Object.values(this.tagsByType)
-                        .flat()
-                        .filter((tag) => tag),
-                    (tag) => tag.path,
-                    (tag) => html`
-                        <sp-tag key=${tag.path} size="s" deletable @delete=${this.#handleTagDelete} .value=${tag}
-                            >${tag.title}</sp-tag
-                        >
-                    `,
-                )}
-                ${this.createdByUsersTags}
-            </sp-tags>
+            ${this.hasActiveFilters
+                ? html`
+                      <div id="active-filters">
+                          <sp-tags>
+                              ${repeat(
+                                  Object.values(this.tagsByType)
+                                      .flat()
+                                      .filter((tag) => tag),
+                                  (tag) => tag.path,
+                                  (tag) => html`
+                                      <sp-tag
+                                          key=${tag.path}
+                                          size="s"
+                                          deletable
+                                          @delete=${this.#handleTagDelete}
+                                          .value=${tag}
+                                          >${tag.title}</sp-tag
+                                      >
+                                  `,
+                              )}
+                              ${this.createdByUsersTags}
+                          </sp-tags>
+                          <sp-action-button quiet @click=${this.#handleRefresh} title="Clear all filters">
+                              Reset Filters
+                              <sp-icon-refresh slot="icon"></sp-icon-refresh>
+                          </sp-action-button>
+                      </div>
+                  `
+                : nothing}
         `;
     }
 
