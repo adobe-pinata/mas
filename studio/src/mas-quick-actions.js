@@ -6,43 +6,53 @@ const ACTION_CONFIG = {
     [QUICK_ACTION.SAVE]: {
         icon: 'sp-icon-save-floppy',
         title: 'Save',
+        tooltip: 'Save',
     },
     [QUICK_ACTION.DUPLICATE]: {
         icon: 'sp-icon-duplicate',
         title: 'Duplicate',
+        tooltip: 'Duplicate',
     },
     [QUICK_ACTION.PUBLISH]: {
         icon: 'sp-icon-publish',
         title: 'Publish',
+        tooltip: 'Publish',
     },
     [QUICK_ACTION.UNPUBLISH]: {
         icon: 'sp-icon-publish-remove',
         title: 'Unpublish',
+        tooltip: 'Unpublish',
     },
     [QUICK_ACTION.CANCEL]: {
         icon: 'sp-icon-undo',
         title: 'Cancel',
+        tooltip: 'Cancel translation',
     },
     [QUICK_ACTION.COPY]: {
         icon: 'sp-icon-code',
         title: 'Copy code',
+        tooltip: 'Copy link',
     },
     [QUICK_ACTION.LOCK]: {
         icon: 'sp-icon-lock-closed',
         title: 'Lock',
+        tooltip: 'Lock project',
     },
     [QUICK_ACTION.DISCARD]: {
         icon: 'sp-icon-undo',
         title: 'Discard',
+        tooltip: 'Delete',
     },
     [QUICK_ACTION.DELETE]: {
         icon: 'sp-icon-delete',
         title: 'Delete',
+        tooltip: 'Delete',
         className: 'delete-action',
     },
     [QUICK_ACTION.LOC]: {
         icon: 'custom-icon-send-to-loc',
         title: 'Send to Localization',
+        tooltip: 'Send for translation',
     },
 };
 
@@ -244,11 +254,11 @@ class MasQuickActions extends LitElement {
         return html`
             <sp-action-button
                 class="${config.className || ''}"
-                title="${config.title}"
                 ?disabled=${this.disabled.has(action)}
                 @click="${() => this.dispatchEvent(new CustomEvent(action, { bubbles: true, composed: true }))}"
             >
                 ${this.renderIcon(config.icon)}
+                <sp-tooltip self-managed placement="top">${config.tooltip}</sp-tooltip>
             </sp-action-button>
         `;
     }
