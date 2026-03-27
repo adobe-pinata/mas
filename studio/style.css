@@ -108,6 +108,13 @@ sp-sidenav-item sp-icon {
     position: relative;
 }
 
+mas-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: var(--spectrum-white);
+}
+
 mas-studio > ul > li {
     list-style: none;
     position: relative;
