@@ -308,6 +308,28 @@ describe('getLocaleSettings', () => {
             country: 'GB',
         });
     });
+
+    it('does not use path-segment locale as language when locale has no underscore', () => {
+        const result = getLocaleSettings({ locale: 'jp' });
+        expect(result).to.deep.equal({
+            locale: 'en_JP',
+            language: 'en',
+            country: 'JP',
+        });
+    });
+
+    it('uses explicit language and country even when locale is a path segment', () => {
+        const result = getLocaleSettings({
+            locale: 'jp',
+            country: 'JP',
+            language: 'ja',
+        });
+        expect(result).to.deep.equal({
+            locale: 'jp',
+            language: 'ja',
+            country: 'JP',
+        });
+    });
 });
 
 describe('getPreviewSurface', () => {

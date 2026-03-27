@@ -25,8 +25,15 @@ function getLocaleSettings({
     country = undefined,
     language = undefined,
 } = {}) {
-    language ??= locale?.split('_')?.[0] || Defaults.language;
-    country ??= locale?.split('_')?.[1] || Defaults.country;
+    const hasProperLocale = locale?.includes('_');
+    const originalLanguage = language;
+    language ??= hasProperLocale ? locale.split('_')[0] : Defaults.language;
+    country ??= hasProperLocale
+        ? locale.split('_')[1]
+        : locale?.toUpperCase() || Defaults.country;
+    // When locale is a path segment (no '_') and language was not explicitly provided,
+    // discard it so locale is reconstructed from derived language + country.
+    if (!hasProperLocale && originalLanguage == null) locale = undefined;
     locale ??= `${language}_${country}`;
     return { locale, country, language };
 }

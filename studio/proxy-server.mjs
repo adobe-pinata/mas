@@ -41,7 +41,7 @@ if (keyPath && certPath) {
 } else {
     server = createHttpServer(requestHandler);
     serverProtocol = 'http';
-    serverPort = 8080; // Use 8080 for HTTP
+    serverPort = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080; // Use PORT env or 8080
 }
 
 // Common request handler
