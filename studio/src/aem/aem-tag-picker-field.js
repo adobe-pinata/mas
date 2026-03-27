@@ -120,19 +120,6 @@ class AemTagPickerField extends LitElement {
             padding: 8px;
         }
 
-        #footer {
-            padding: 8px;
-            height: 40px;
-            align-items: center;
-            display: flex;
-            gap: 8px;
-            justify-content: end;
-        }
-
-        #footer span {
-            flex: 1;
-        }
-
         sp-action-button {
             display: flex;
             flex-direction: row-reverse;
@@ -611,20 +598,8 @@ class AemTagPickerField extends LitElement {
             currentValue.splice(index, 1);
         }
         this.tempValue = currentValue;
-    }
-
-    resetSelection() {
-        this.tempValue = [];
-        this.shadowRoot.querySelectorAll('sp-checkbox').forEach((checkbox) => {
-            checkbox.checked = this.tempValue.includes(checkbox.value);
-        });
-    }
-
-    async applySelection() {
-        this.value = [...this.tempValue];
-        this.tempValue = [];
-        this.overlayTrigger.open = false;
-        this.#notifyChange();
+        this.value = [...currentValue];
+        await this.#notifyChange();
     }
 
     #hasSameSelections(a, b) {
@@ -642,7 +617,6 @@ class AemTagPickerField extends LitElement {
             if (changed) this.#notifyChange();
             return;
         }
-        this.tempValue = [...this.#asValueArray()];
     }
 
     #handleSearchInput(event) {
@@ -686,15 +660,6 @@ class AemTagPickerField extends LitElement {
                         },
                     )}
                 </div>
-                ${this.isCheckboxTagsMode
-                    ? nothing
-                    : html`<div id="footer">
-                          <span> ${this.selectedText} </span>
-                          <sp-button size="s" @click=${this.resetSelection} variant="secondary" treatment="outline">
-                              Reset
-                          </sp-button>
-                          <sp-button size="s" @click=${this.applySelection}> Apply </sp-button>
-                      </div>`}
             </div>
         `;
     }
