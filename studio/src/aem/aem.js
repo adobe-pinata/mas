@@ -672,6 +672,27 @@ class AEM {
     }
 
     /**
+     * Generates a unique fragment title by appending a numeric suffix if the title already exists
+     * @param {string} parentPath - The parent folder path to scope the uniqueness check
+     * @param {string} title - The desired fragment title
+     * @returns {Promise<string>} A unique title (unchanged or suffixed with -1, -2, …)
+     */
+    async generateUniqueTitle(parentPath, title) {
+        const existingTitles = new Set();
+        for await (const items of this.searchFragment({ path: parentPath, query: title })) {
+            for (const item of items) {
+                existingTitles.add(item.title);
+            }
+        }
+        if (!existingTitles.has(title)) return title;
+        for (let attempt = 1; attempt <= MAX_NAME_ATTEMPTS; attempt++) {
+            const candidate = `${title}-${attempt}`;
+            if (!existingTitles.has(candidate)) return candidate;
+        }
+        throw new Error(`Cannot create unique title after ${MAX_NAME_ATTEMPTS} attempts`);
+    }
+
+    /**
      * Creates a copy of a fragment in the specified location
      * @param {Object} fullFragment - The complete fragment data to copy
      * @param {string} targetPath - The destination path for the copy
@@ -1375,6 +1396,10 @@ class AEM {
                  * @see AEM#getReferencedBy
                  */
                 getReferencedBy: this.getReferencedBy.bind(this),
+                /**
+                 * @see AEM#generateUniqueTitle
+                 */
+                generateUniqueTitle: this.generateUniqueTitle.bind(this),
             },
         },
     };

@@ -1014,11 +1014,15 @@ export class MasRepository extends LitElement {
             this.operation.set(OPERATIONS.CLONE);
             const result = await this.aem.sites.cf.fragments.copy(this.fragmentInEdit);
             let savedResult = result;
-            const needsSave = (updatedTitle && updatedTitle !== result.title) || osi;
+            const originalTitle = result.title;
+            const parentPath = result.path.substring(0, result.path.lastIndexOf('/'));
+            const proposedTitle = updatedTitle || originalTitle;
+            const uniqueTitle = await this.aem.sites.cf.fragments.generateUniqueTitle(parentPath, proposedTitle);
+            if (uniqueTitle !== originalTitle) {
+                result.title = uniqueTitle;
+            }
+            const needsSave = result.title !== originalTitle || osi;
             if (needsSave) {
-                if (updatedTitle && updatedTitle !== result.title) {
-                    result.title = updatedTitle;
-                }
                 result.fields.forEach((field) => {
                     if (osi && field.name === 'osi') {
                         field.values = [osi];
