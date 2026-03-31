@@ -35,10 +35,12 @@ reports/
 .logs
 
 # IO Runtime Config
+trades.log
 config.json
 MerchAtScale-*.json
 masStudio-*.json
 .env*
+!scripts/btc-bot/.env.example
 .aio
 .cursor
 
