@@ -80,8 +80,19 @@ class MasFragment extends LitElement {
         return document.querySelector('mas-repository');
     }
 
+    openInNewTab(fragmentId) {
+        const url = router.getFragmentEditorUrl(fragmentId);
+        window.open(url, '_blank');
+    }
+
     handleClick(event) {
         if (Store.selecting.value) return;
+        if (event.metaKey || event.ctrlKey) {
+            const fragment = this.fragmentStore?.value;
+            if (!fragment?.id) return;
+            this.openInNewTab(fragment.id);
+            return;
+        }
         clearTimeout(tooltipTimeout.get());
         const currentTarget = event.currentTarget;
         tooltipTimeout.set(
@@ -126,6 +137,12 @@ class MasFragment extends LitElement {
 
     async edit(event) {
         if (Store.selecting.value) return;
+        if (event.metaKey || event.ctrlKey) {
+            const fragment = this.fragmentStore?.value;
+            if (!fragment?.id) return;
+            this.openInNewTab(fragment.id);
+            return;
+        }
         // Remove tooltip
         clearTimeout(tooltipTimeout.get());
         event.currentTarget.classList.remove('has-tooltip');

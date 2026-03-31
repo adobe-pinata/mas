@@ -259,6 +259,22 @@ export class Router extends EventTarget {
     }
 
     /**
+     * Build the fragment editor URL for a given fragment ID without navigating.
+     * @param {string} fragmentId - The fragment ID
+     * @returns {string} The URL hash string pointing to the fragment editor
+     */
+    getFragmentEditorUrl(fragmentId) {
+        const params = new URLSearchParams(this.#hashValue());
+        params.set('page', PAGE_NAMES.FRAGMENT_EDITOR);
+        params.set('fragmentId', fragmentId);
+        params.delete('query');
+        const sorted = new URLSearchParams(
+            Array.from(params.entries()).sort(([a], [b]) => a.localeCompare(b))
+        );
+        return `${window.location.pathname}#${sorted.toString()}`;
+    }
+
+    /**
      * Navigate to the translation editor with optional pre-fill data
      * @param {Object} options - Navigation options
      * @param {string} options.targetLocale - Optional target locale to pre-fill
