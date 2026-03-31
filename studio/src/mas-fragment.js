@@ -77,7 +77,8 @@ class MasFragment extends LitElement {
         return document.querySelector('mas-repository');
     }
 
-    handleClick() {
+    handleClick(event) {
+        event?.stopPropagation();
         Store.selecting.set(true);
         toggleSelection(this.fragmentStore.id);
     }
