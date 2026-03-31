@@ -51,7 +51,8 @@ jobs:
           owner: joaquinrivero
 
       - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
+        # Pinned to 2.1.87 — 2.1.88 broke skill resolution in -p mode
+        run: npm install -g @anthropic-ai/claude-code@2.1.87
 
       - name: Checkout agentic-harness
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -59,9 +60,6 @@ jobs:
           repository: joaquinrivero/agentic-harness
           token: ${{ steps.harness-token.outputs.token }}
           path: harness
-
-      - name: Move harness outside workspace
-        run: mv harness /home/runner/harness
 
       - name: Validate inputs
         env:
@@ -84,5 +82,5 @@ jobs:
           EVENT_TYPE: ${{ github.event.inputs.event_type || github.event.action || 'workflow_dispatch' }}
           SOURCE_REPO: ${{ github.repository }}
         run: |
-          cd /home/runner/harness
+          cd harness
           claude --settings '{"hooks":{"SessionStart":[],"PreToolUse":[],"PostToolUse":[],"Notification":[],"Stop":[],"SubagentStop":[],"PreCompact":[],"UserPromptSubmit":[],"SessionEnd":[]}}' -p "/app:pinata:review \"${SOURCE_REPO}\" \"${PR_NUMBER}\" \"${EVENT_TYPE}\""
