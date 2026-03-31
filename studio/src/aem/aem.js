@@ -1,4 +1,4 @@
-import { UserFriendlyError } from '../utils.js';
+import { UserFriendlyError, isUUID } from '../utils.js';
 import { COLLECTION_MODEL_PATH } from '../constants.js';
 
 const NETWORK_ERROR_MESSAGE = 'Network error';
@@ -134,6 +134,7 @@ class AEM {
             params.limit = limit;
         }
 
+        const seenPaths = new Set();
         let cursor;
         while (true) {
             if (cursor) {
@@ -155,9 +156,44 @@ class AEM {
                 items = items.filter(filterByTags(tags));
             }
 
+            for (const item of items) {
+                if (item.path) seenPaths.add(item.path);
+            }
             yield items;
             if (!cursor) break;
         }
+
+        if (query && !isUUID(query)) {
+            const titlePaths = await this.searchFragmentPathsByTitle(path, query).catch(() => []);
+            const newPaths = titlePaths.filter((p) => !seenPaths.has(p));
+            if (newPaths.length > 0) {
+                const titleFragments = await Promise.all(
+                    newPaths.map((p) => this.getFragmentByPath(p).catch(() => null)),
+                );
+                let validTitleFragments = titleFragments.filter(Boolean);
+                if (tags.length > 0) {
+                    validTitleFragments = validTitleFragments.filter(filterByTags(tags));
+                }
+                if (validTitleFragments.length > 0) {
+                    yield validTitleFragments;
+                }
+            }
+        }
+    }
+
+    /**
+     * Search for fragment paths by title using AEM querybuilder.
+     * @param {string} path - The JCR path to search under
+     * @param {string} titleQuery - The title substring to search for
+     * @returns {Promise<string[]>} array of matching JCR paths
+     */
+    async searchFragmentPathsByTitle(path, titleQuery) {
+        const encodedQuery = encodeURIComponent(`%${titleQuery}%`);
+        const url = `${this.baseUrl}/bin/querybuilder.json?path=${path}&type=dam:Asset&property=jcr:title&property.operation=like&property.value=${encodedQuery}&p.limit=-1`;
+        const response = await fetch(url, { headers: this.headers });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return (data.hits || []).map((hit) => hit.path).filter(Boolean);
     }
 
     /**
