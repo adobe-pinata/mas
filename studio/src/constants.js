@@ -232,6 +232,7 @@ export const FILTER_TYPE = {
     MARKET_SEGMENT: 'marketSegment',
     CUSTOMER_SEGMENT: 'customerSegment',
     PRODUCT: 'product',
+    CREATED_BY: 'createdBy',
 };
 
 export const FRAGMENT_STATUS = {

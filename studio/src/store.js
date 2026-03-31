@@ -137,6 +137,7 @@ const Store = {
         selectedPlaceholders: new ReactiveStore([]),
 
         targetLocales: new ReactiveStore([]),
+        createdByUsers: new ReactiveStore([]),
         showSelected: new ReactiveStore(false),
         projectType: new ReactiveStore(null),
     },

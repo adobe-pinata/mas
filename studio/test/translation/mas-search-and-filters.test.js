@@ -33,6 +33,7 @@ describe('MasSearchAndFilters', () => {
         Store.translationProjects.displayCollections.set([]);
         Store.translationProjects.allPlaceholders.set([]);
         Store.translationProjects.displayPlaceholders.set([]);
+        Store.translationProjects.createdByUsers.set([]);
         Store.fragments.list.loading.set(false);
         Store.placeholders.list.loading.set(false);
         Store.placeholders.list.data.set([]);
@@ -47,6 +48,7 @@ describe('MasSearchAndFilters', () => {
         Store.translationProjects.displayCollections.set([]);
         Store.translationProjects.allPlaceholders.set([]);
         Store.translationProjects.displayPlaceholders.set([]);
+        Store.translationProjects.createdByUsers.set([]);
         Store.fragments.list.loading.set(false);
         Store.placeholders.list.loading.set(false);
         Store.placeholders.list.data.set([]);
@@ -992,6 +994,100 @@ describe('MasSearchAndFilters', () => {
             search.dispatchEvent(new InputEvent('input', { bubbles: true }));
             await el.updateComplete;
             expect(Store.translationProjects.displayCollections.get().length).to.equal(1);
+        });
+    });
+
+    describe('created by filter', () => {
+        it('should initialize with empty createdByUsers store', async () => {
+            await fixture(html`<mas-search-and-filters type="cards"></mas-search-and-filters>`);
+            expect(Store.translationProjects.createdByUsers.get()).to.deep.equal([]);
+        });
+
+        it('should filter cards by created by user', async () => {
+            Store.translationProjects.allCards.set([
+                createMockFragment({ title: 'Card 1', created: { by: 'user@example.com' } }),
+                createMockFragment({ title: 'Card 2', created: { by: 'other@example.com' } }),
+            ]);
+            const el = await fixture(html`<mas-search-and-filters type="cards"></mas-search-and-filters>`);
+            Store.translationProjects.createdByUsers.set([
+                { userPrincipalName: 'user@example.com', displayName: 'User One' },
+            ]);
+            await el.updateComplete;
+            expect(Store.translationProjects.displayCards.get().length).to.equal(1);
+            expect(Store.translationProjects.displayCards.get()[0].title).to.equal('Card 1');
+        });
+
+        it('should filter created by user case-insensitively', async () => {
+            Store.translationProjects.allCards.set([
+                createMockFragment({ title: 'Card 1', created: { by: 'User@Example.COM' } }),
+                createMockFragment({ title: 'Card 2', created: { by: 'other@example.com' } }),
+            ]);
+            const el = await fixture(html`<mas-search-and-filters type="cards"></mas-search-and-filters>`);
+            Store.translationProjects.createdByUsers.set([
+                { userPrincipalName: 'user@example.com', displayName: 'User One' },
+            ]);
+            await el.updateComplete;
+            expect(Store.translationProjects.displayCards.get().length).to.equal(1);
+        });
+
+        it('should show user tag in applied filters when user is selected', async () => {
+            const el = await fixture(html`<mas-search-and-filters type="cards" .searchOnly=${false}></mas-search-and-filters>`);
+            Store.translationProjects.createdByUsers.set([
+                { userPrincipalName: 'user@example.com', displayName: 'User One' },
+            ]);
+            await el.updateComplete;
+            const filters = el.appliedFilters;
+            expect(filters.length).to.equal(1);
+            expect(filters[0].type).to.equal(FILTER_TYPE.CREATED_BY);
+            expect(filters[0].id).to.equal('user@example.com');
+            expect(filters[0].label).to.equal('User One');
+        });
+
+        it('should remove user filter on tag delete', async () => {
+            Store.translationProjects.createdByUsers.set([
+                { userPrincipalName: 'user@example.com', displayName: 'User One' },
+            ]);
+            const el = await fixture(html`<mas-search-and-filters type="cards" .searchOnly=${false}></mas-search-and-filters>`);
+            await el.updateComplete;
+            const tag = el.shadowRoot.querySelector('sp-tag');
+            tag.value = { type: FILTER_TYPE.CREATED_BY, id: 'user@example.com' };
+            tag.dispatchEvent(new CustomEvent('delete', { bubbles: true }));
+            await el.updateComplete;
+            expect(Store.translationProjects.createdByUsers.get()).to.deep.equal([]);
+        });
+
+        it('should clear user filter on clearAllFilters', async () => {
+            Store.translationProjects.createdByUsers.set([
+                { userPrincipalName: 'user@example.com', displayName: 'User One' },
+            ]);
+            const el = await fixture(html`<mas-search-and-filters type="cards" .searchOnly=${false}></mas-search-and-filters>`);
+            await el.updateComplete;
+            const clearButton = el.shadowRoot.querySelector('.applied-filters sp-action-button');
+            clearButton.click();
+            await el.updateComplete;
+            expect(Store.translationProjects.createdByUsers.get()).to.deep.equal([]);
+        });
+
+        it('should reset createdByUsers store on disconnectedCallback', async () => {
+            Store.translationProjects.createdByUsers.set([
+                { userPrincipalName: 'user@example.com', displayName: 'User One' },
+            ]);
+            const el = await fixture(html`<mas-search-and-filters type="cards"></mas-search-and-filters>`);
+            el.disconnectedCallback();
+            expect(Store.translationProjects.createdByUsers.get()).to.deep.equal([]);
+        });
+
+        it('should exclude fragments without created.by when filter is active', async () => {
+            Store.translationProjects.allCards.set([
+                createMockFragment({ title: 'Card 1', created: { by: 'user@example.com' } }),
+                createMockFragment({ title: 'Card 2' }),
+            ]);
+            const el = await fixture(html`<mas-search-and-filters type="cards"></mas-search-and-filters>`);
+            Store.translationProjects.createdByUsers.set([
+                { userPrincipalName: 'user@example.com', displayName: 'User One' },
+            ]);
+            await el.updateComplete;
+            expect(Store.translationProjects.displayCards.get().length).to.equal(1);
         });
     });
 });

@@ -5,6 +5,7 @@ import { styles } from './mas-search-and-filters.css.js';
 import Store from '../store.js';
 import { FILTER_TYPE, TABLE_TYPE } from '../constants.js';
 import ReactiveController from '../reactivity/reactive-controller.js';
+import '../fields/user-picker.js';
 
 class MasSearchAndFilters extends LitElement {
     static styles = styles;
@@ -43,6 +44,7 @@ class MasSearchAndFilters extends LitElement {
             Store.translationProjects[`all${this.typeUppercased}`],
             Store.translationProjects[`display${this.typeUppercased}`],
             Store[this.type === TABLE_TYPE.PLACEHOLDERS ? 'placeholders' : 'fragments'].list.loading,
+            Store.translationProjects.createdByUsers,
         ]);
         const dataCallback = () => {
             if (!this.searchOnly) {
@@ -54,6 +56,14 @@ class MasSearchAndFilters extends LitElement {
         this.dataSubscription = {
             unsubscribe: () => Store.translationProjects[`all${this.typeUppercased}`].unsubscribe(dataCallback),
         };
+        const createdByCallback = () => {
+            this.#applyFilters();
+            this.requestUpdate();
+        };
+        Store.translationProjects.createdByUsers.subscribe(createdByCallback);
+        this.createdBySubscription = {
+            unsubscribe: () => Store.translationProjects.createdByUsers.unsubscribe(createdByCallback),
+        };
     }
 
     disconnectedCallback() {
@@ -61,7 +71,9 @@ class MasSearchAndFilters extends LitElement {
         Store.translationProjects[`display${this.typeUppercased}`].set(
             Store.translationProjects[`all${this.typeUppercased}`].value,
         );
+        Store.translationProjects.createdByUsers.set([]);
         this.dataSubscription?.unsubscribe();
+        this.createdBySubscription?.unsubscribe();
     }
 
     get typeUppercased() {
@@ -96,6 +108,9 @@ class MasSearchAndFilters extends LitElement {
         for (const id of this.productFilter) {
             const option = productMap.get(id);
             if (option) filters.push({ type: FILTER_TYPE.PRODUCT, id, label: option.title || option.label });
+        }
+        for (const user of Store.translationProjects.createdByUsers.value) {
+            filters.push({ type: FILTER_TYPE.CREATED_BY, id: user.userPrincipalName, label: user.displayName });
         }
         return filters;
     }
@@ -200,6 +215,11 @@ class MasSearchAndFilters extends LitElement {
             case FILTER_TYPE.PRODUCT:
                 this.productFilter = this.productFilter.filter((filterId) => filterId !== id);
                 break;
+            case FILTER_TYPE.CREATED_BY:
+                Store.translationProjects.createdByUsers.set(
+                    Store.translationProjects.createdByUsers.value.filter((u) => u.userPrincipalName !== id),
+                );
+                break;
         }
         this.#applyFilters();
     }
@@ -209,6 +229,7 @@ class MasSearchAndFilters extends LitElement {
         this.marketSegmentFilter = [];
         this.customerSegmentFilter = [];
         this.productFilter = [];
+        Store.translationProjects.createdByUsers.set([]);
         this.#applyFilters();
     }
 
@@ -312,6 +333,11 @@ class MasSearchAndFilters extends LitElement {
             if (hasProduct) {
                 if (!fragment.tags?.some((tag) => this.productFilter.includes(tag.id))) return false;
             }
+            const createdByFilter = Store.translationProjects.createdByUsers.value;
+            if (createdByFilter.length > 0) {
+                const createdByEmails = createdByFilter.map((u) => u.userPrincipalName.toLowerCase());
+                if (!createdByEmails.includes((fragment.created?.by || '').toLowerCase())) return false;
+            }
             return true;
         });
 
@@ -364,6 +390,14 @@ class MasSearchAndFilters extends LitElement {
                               FILTER_TYPE.CUSTOMER_SEGMENT,
                           )}
                           ${this.#renderFilterPicker('Product', this.productOptions, this.productFilter, FILTER_TYPE.PRODUCT)}
+                          ${this.type === TABLE_TYPE.CARDS
+                              ? html`<mas-user-picker
+                                    label="Created by"
+                                    .currentUser=${Store.profile}
+                                    .selectedUsers=${Store.translationProjects.createdByUsers}
+                                    .users=${Store.users}
+                                ></mas-user-picker>`
+                              : nothing}
                       </div>
 
                       ${this.#renderAppliedFilters()}
