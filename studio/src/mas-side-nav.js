@@ -669,6 +669,7 @@ class MasSideNav extends LitElement {
         return html`
             <mas-side-nav-item
                 id="settings-nav-item"
+                href="#page=settings"
                 ?selected=${Store.page.get() === PAGE_NAMES.SETTINGS || Store.page.get() === PAGE_NAMES.SETTINGS_EDITOR}
                 @nav-click="${router.navigateToPage(PAGE_NAMES.SETTINGS)}"
             >
@@ -681,6 +682,7 @@ class MasSideNav extends LitElement {
         return html`
             <mas-side-nav-item
                 label="Home"
+                href="#page=welcome"
                 ?selected=${Store.page.get() === PAGE_NAMES.WELCOME}
                 @nav-click="${router.navigateToPage(PAGE_NAMES.WELCOME)}"
             >
@@ -688,6 +690,7 @@ class MasSideNav extends LitElement {
             </mas-side-nav-item>
             <mas-side-nav-item
                 label="Fragments"
+                href="#page=content"
                 ?selected=${Store.page.get() === PAGE_NAMES.CONTENT}
                 @nav-click="${router.navigateToPage(PAGE_NAMES.CONTENT)}"
             >
@@ -704,6 +707,7 @@ class MasSideNav extends LitElement {
             </mas-side-nav-item>
             <mas-side-nav-item
                 label="Placeholders"
+                href="#page=placeholders"
                 ?selected=${Store.page.get() === PAGE_NAMES.PLACEHOLDERS}
                 @nav-click="${router.navigateToPage(PAGE_NAMES.PLACEHOLDERS)}"
             >
@@ -711,6 +715,7 @@ class MasSideNav extends LitElement {
             </mas-side-nav-item>
             <mas-side-nav-item
                 label="Translations"
+                href="#page=translations"
                 ?selected=${Store.page.get() === PAGE_NAMES.TRANSLATIONS}
                 @nav-click=${this.isTranslationEnabled ? router.navigateToPage(PAGE_NAMES.TRANSLATIONS) : nothing}
             >
@@ -719,6 +724,7 @@ class MasSideNav extends LitElement {
             <mas-side-nav-item
                 class="side-nav-support"
                 label="Support"
+                href="https://adobe.enterprise.slack.com/archives/C02RZERR9CH"
                 @nav-click="${() => window.open('https://adobe.enterprise.slack.com/archives/C02RZERR9CH', '_blank')}"
             >
                 <sp-icon-help slot="icon"></sp-icon-help>
