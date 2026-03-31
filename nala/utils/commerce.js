@@ -29,6 +29,7 @@ const DOCS_GALLERY_PATH = {
     },
     ADOBE_HOME: { US: '/web-components/docs/adobe-home.html' },
     PLANS: '/web-components/docs/plans.html',
+    LINGO: '/web-components/docs/lingo.html',
     CHECKOUT_LINK: '/web-components/docs/checkout-link.html',
     MERCH_CARD: '/web-components/docs/merch-card.html',
     EXPRESS: '/web-components/docs/express.html',
