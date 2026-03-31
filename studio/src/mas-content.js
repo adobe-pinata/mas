@@ -19,6 +19,7 @@ class MasContent extends LitElement {
     constructor() {
         super();
         this.goToFragment = this.goToFragment.bind(this);
+        this.handleClickOutside = this.handleClickOutside.bind(this);
         this.subscriptions = [];
     }
 
@@ -31,8 +32,19 @@ class MasContent extends LitElement {
     search = new StoreController(this, Store.search);
     filters = new StoreController(this, Store.filters);
 
+    handleClickOutside(event) {
+        const path = event.composedPath();
+        const insideFragment = path.some((el) => el.tagName === 'MAS-FRAGMENT');
+        const insidePanel = path.some((el) => el.tagName === 'MAS-SELECTION-PANEL');
+        if (!insideFragment && !insidePanel) {
+            Store.selecting.set(false);
+            Store.selection.set([]);
+        }
+    }
+
     connectedCallback() {
         super.connectedCallback();
+        document.addEventListener('click', this.handleClickOutside);
         Events.fragmentAdded.subscribe(this.goToFragment);
         Events.fragmentDeleted.subscribe(this.onFragmentDeleted);
 
@@ -51,6 +63,7 @@ class MasContent extends LitElement {
 
     disconnectedCallback() {
         super.disconnectedCallback();
+        document.removeEventListener('click', this.handleClickOutside);
         Events.fragmentAdded.unsubscribe(this.goToFragment);
         Events.fragmentDeleted.unsubscribe(this.onFragmentDeleted);
 

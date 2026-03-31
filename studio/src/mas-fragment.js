@@ -2,15 +2,12 @@ import { LitElement, html, nothing } from 'lit';
 import './mas-fragment-render.js';
 import './mas-fragment-table.js';
 import './mas-fragment-variations.js';
-import { ReactiveStore } from './reactivity/reactive-store.js';
-import Store from './store.js';
+import Store, { toggleSelection } from './store.js';
 import router from './router.js';
 import { styles } from './mas-fragment.css.js';
 import { MasRepository } from './mas-repository.js';
 import { showToast } from './utils.js';
 import ReactiveController from './reactivity/reactive-controller.js';
-
-const tooltipTimeout = new ReactiveStore(null);
 
 class MasFragment extends LitElement {
     static properties = {
@@ -81,14 +78,9 @@ class MasFragment extends LitElement {
     }
 
     handleClick(event) {
-        if (Store.selecting.value) return;
-        clearTimeout(tooltipTimeout.get());
-        const currentTarget = event.currentTarget;
-        tooltipTimeout.set(
-            setTimeout(() => {
-                currentTarget.classList.add('has-tooltip');
-            }, 500),
-        );
+        event?.stopPropagation();
+        Store.selecting.set(true);
+        toggleSelection(this.fragmentStore.id);
     }
 
     async toggleExpand(e) {
@@ -118,18 +110,7 @@ class MasFragment extends LitElement {
         }
     }
 
-    handleMouseLeave(event) {
-        if (Store.selecting.value) return;
-        clearTimeout(tooltipTimeout.get());
-        event.currentTarget.classList.remove('has-tooltip');
-    }
-
-    async edit(event) {
-        if (Store.selecting.value) return;
-        // Remove tooltip
-        clearTimeout(tooltipTimeout.get());
-        event.currentTarget.classList.remove('has-tooltip');
-        // Handle edit
+    async edit() {
         const fragment = this.fragmentStore.value;
         if (fragment?.id) {
             await router.navigateToFragmentEditor(fragment.id);
@@ -145,7 +126,6 @@ class MasFragment extends LitElement {
             .fragmentStore=${this.fragmentStore}
             ?selected=${selected}
             @click=${this.handleClick}
-            @mouseleave=${this.handleMouseLeave}
             @dblclick=${this.edit}
         ></mas-fragment-render>`;
     }
@@ -162,7 +142,6 @@ class MasFragment extends LitElement {
                     .expanded=${this.expanded}
                     .toggleExpand=${this.toggleExpand.bind(this)}
                     @click=${this.handleClick}
-                    @mouseleave=${this.handleMouseLeave}
                     @dblclick=${this.edit}
                 ></mas-fragment-table
                 ><sp-tooltip slot="hover-content" placement="top">Double click the card to start editing.</sp-tooltip>
