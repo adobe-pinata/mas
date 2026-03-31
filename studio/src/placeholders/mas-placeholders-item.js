@@ -128,6 +128,17 @@ class MasPlaceholdersItem extends LitElement {
         this.placeholderStore.refreshFrom(updatedPlaceholder);
     }
 
+    async onCopyCode(event) {
+        this.toggleDropdown(this.placeholder.key, event);
+        const url = '{{' + this.placeholder.path + '}}';
+        try {
+            await navigator.clipboard.writeText(url);
+            showToast('Code copied to clipboard', 'positive');
+        } catch {
+            showToast('Failed to copy code to clipboard', 'negative');
+        }
+    }
+
     preventSelection(event) {
         event.stopPropagation();
     }
@@ -295,6 +306,10 @@ class MasPlaceholdersItem extends LitElement {
                                       >
                                           <sp-icon-publish size="m"></sp-icon-publish>
                                           <span>Publish</span>
+                                      </div>
+                                      <div class="dropdown-item" @click="${this.onCopyCode}">
+                                          <sp-icon-copy size="m"></sp-icon-copy>
+                                          <span>Copy Code</span>
                                       </div>
                                       <div class="dropdown-item" @click="${this.onDelete}">
                                           <sp-icon-delete size="m"></sp-icon-delete>
