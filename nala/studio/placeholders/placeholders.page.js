@@ -146,6 +146,10 @@ export default class PlaceholdersPage {
         return data;
     }
 
+    getCopyCodeMenuItem(row) {
+        return row.locator('.dropdown-item:has-text("Copy Code")');
+    }
+
     async assertPlaceholdersExist() {
         // Strict assertion that placeholders must exist
         const rowCount = await this.waitForPlaceholderRows();

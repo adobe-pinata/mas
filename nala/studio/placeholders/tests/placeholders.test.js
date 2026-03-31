@@ -86,6 +86,39 @@ test.describe('M@S Studio Placeholders Test Suite', () => {
         });
     });
 
+    // Test 3: @studio-placeholders-copy-code - Validate copy code action
+    test(`${features[3].name},${features[3].tags}`, async ({ page, baseURL }) => {
+        const testPage = `${baseURL}${features[3].path}${miloLibs}${features[3].browserParams}`;
+        setTestPage(testPage);
+
+        await test.step('step-1: Navigate to placeholders page', async () => {
+            await page.goto(testPage);
+            await page.waitForLoadState('domcontentloaded');
+        });
+
+        await test.step('step-2: Wait for table to load and open dropdown', async () => {
+            await page.context().grantPermissions(['clipboard-read']);
+            await placeholders.waitForTableToLoad();
+            const firstRow = placeholders.placeholderRows.first();
+            await firstRow.locator('.action-menu-button').click();
+        });
+
+        await test.step('step-3: Click Copy Code and verify clipboard', async () => {
+            const firstRow = placeholders.placeholderRows.first();
+            const copyCodeItem = placeholders.getCopyCodeMenuItem(firstRow);
+            await expect(copyCodeItem).toBeVisible();
+            await copyCodeItem.click();
+
+            const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
+            expect(clipboardText).toMatch(/^\{\{.+\}\}$/);
+        });
+
+        await test.step('step-4: Verify positive toast appears', async () => {
+            await expect(placeholders.toastPositive).toBeVisible();
+            await expect(placeholders.toastPositive).toContainText('Code copied to clipboard');
+        });
+    });
+
     // Test 2: @studio-placeholders-search-field - Validate search field functionality
     test(`${features[2].name},${features[2].tags}`, async ({ page, baseURL }) => {
         const { data } = features[2];
