@@ -389,6 +389,8 @@ export default class MasFragmentEditor extends LitElement {
         variationsToDelete: { type: Array, state: true },
         initState: { type: String, state: true },
         groupedVariationOrphanMessage: { type: String, state: true },
+        showInUseDialog: { type: Boolean, state: true },
+        inUseReferences: { type: Array, state: true },
     };
 
     page = new StoreController(this, Store.page);
@@ -437,12 +439,17 @@ export default class MasFragmentEditor extends LitElement {
         this.initState = MasFragmentEditor.INIT_STATE.IDLE;
         this.groupedVariationOrphanMessage = null;
 
+        this.showInUseDialog = false;
+        this.inUseReferences = [];
+
         this.updateFragment = this.updateFragment.bind(this);
         this.deleteFragment = this.deleteFragment.bind(this);
         this.confirmDelete = this.confirmDelete.bind(this);
         this.cancelDelete = this.cancelDelete.bind(this);
         this.discardConfirmed = this.discardConfirmed.bind(this);
         this.cancelDiscard = this.cancelDiscard.bind(this);
+        this.closeInUseDialog = this.closeInUseDialog.bind(this);
+        this.unpublishFragment = this.unpublishFragment.bind(this);
     }
 
     createRenderRoot() {
@@ -1055,6 +1062,14 @@ export default class MasFragmentEditor extends LitElement {
     }
 
     async confirmDelete() {
+        const usageEntry = Store.fragments.usages.get()[this.fragment.id];
+        const references = usageEntry?.references;
+        if (references?.length) {
+            this.showDeleteDialog = false;
+            this.inUseReferences = references;
+            this.showInUseDialog = true;
+            return;
+        }
         this.deleteInProgress = true;
         showToast('Deleting fragment...');
         try {
@@ -1157,6 +1172,28 @@ export default class MasFragmentEditor extends LitElement {
         }
     }
 
+    async unpublishFragment() {
+        const usageEntry = Store.fragments.usages.get()[this.fragment.id];
+        const references = usageEntry?.references;
+        if (references?.length) {
+            this.inUseReferences = references;
+            this.showInUseDialog = true;
+            return;
+        }
+        try {
+            await this.repository.unpublishFragment(this.fragment);
+        } catch (error) {
+            console.error('Failed to unpublish fragment:', error);
+            showToast(`Failed to unpublish fragment: ${error.message}`, 'negative');
+            throw error;
+        }
+    }
+
+    closeInUseDialog() {
+        this.showInUseDialog = false;
+        this.inUseReferences = [];
+    }
+
     async copyToUse() {
         const { code, richText, href } = generateCodeToUse(
             this.fragment,
@@ -1177,6 +1214,23 @@ export default class MasFragmentEditor extends LitElement {
         } catch (e) {
             showToast('Failed to copy code to clipboard', 'negative');
         }
+    }
+
+    get inUseDialog() {
+        if (!this.showInUseDialog) return nothing;
+        return html`
+            <sp-underlay open @click="${this.closeInUseDialog}"></sp-underlay>
+            <sp-dialog open variant="confirmation" @sp-dialog-dismiss="${this.closeInUseDialog}">
+                <h1 slot="heading">Fragment in use</h1>
+                <p>This fragment is referenced by the following collection(s) and cannot be modified:</p>
+                <ul>
+                    ${this.inUseReferences.map(
+                        (ref) => html`<li><a href="${ref.path}" target="_blank" rel="noopener">${ref.title || ref.path}</a></li>`,
+                    )}
+                </ul>
+                <sp-button slot="button" variant="secondary" @click="${this.closeInUseDialog}">Close</sp-button>
+            </sp-dialog>
+        `;
     }
 
     get deleteConfirmationDialog() {
@@ -1685,7 +1739,7 @@ export default class MasFragmentEditor extends LitElement {
                     <div id="form-column">${this.fragmentEditor}</div>
                     ${this.previewColumn}
                 </div>
-                ${this.deleteConfirmationDialog} ${this.discardConfirmationDialog} ${this.cloneConfirmationDialog}
+                ${this.inUseDialog} ${this.deleteConfirmationDialog} ${this.discardConfirmationDialog} ${this.cloneConfirmationDialog}
                 ${this.copyVariationDialog}
             </div>
         `;

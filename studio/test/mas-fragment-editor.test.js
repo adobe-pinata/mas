@@ -803,6 +803,58 @@ describe('MasFragmentEditor', () => {
             expect(mockRepo.removeFromParentVariations.calledOnce).to.be.true;
             expect(mockRepo.deleteFragment.calledOnce).to.be.true;
         });
+
+        it('blocks delete when fragment has references', async () => {
+            sandbox.stub(Store.fragments.usages, 'get').returns({
+                'test-id': { references: [{ path: '/col1', title: 'Col 1' }] },
+            });
+            sandbox.stub(el.editorContextStore, 'isVariation').returns(false);
+            await el.confirmDelete();
+            expect(mockRepo.deleteFragmentWithVariations.called).to.be.false;
+            expect(el.showInUseDialog).to.be.true;
+        });
+
+        it('proceeds with delete when no references', async () => {
+            sandbox.stub(Store.fragments.usages, 'get').returns({
+                'test-id': { references: [] },
+            });
+            sandbox.stub(el.editorContextStore, 'isVariation').returns(false);
+            await el.confirmDelete();
+            expect(mockRepo.deleteFragmentWithVariations.calledOnce).to.be.true;
+        });
+    });
+
+    describe('unpublishFragment', () => {
+        let el;
+        let mockRepo;
+
+        beforeEach(() => {
+            el = document.createElement('mas-fragment-editor');
+            mockRepo = {
+                unpublishFragment: sandbox.stub().resolves(),
+            };
+            sandbox.stub(el, 'repository').get(() => mockRepo);
+            el.inEdit.value = {
+                get: () => ({ id: 'test-id', path: '/path', getVariations: () => [] }),
+            };
+        });
+
+        it('blocks unpublish when fragment has references', async () => {
+            sandbox.stub(Store.fragments.usages, 'get').returns({
+                'test-id': { references: [{ path: '/col1', title: 'Col 1' }] },
+            });
+            await el.unpublishFragment();
+            expect(mockRepo.unpublishFragment.called).to.be.false;
+            expect(el.showInUseDialog).to.be.true;
+        });
+
+        it('proceeds with unpublish when no references', async () => {
+            sandbox.stub(Store.fragments.usages, 'get').returns({
+                'test-id': { references: [] },
+            });
+            await el.unpublishFragment();
+            expect(mockRepo.unpublishFragment.calledOnce).to.be.true;
+        });
     });
 
     describe('cloning', () => {

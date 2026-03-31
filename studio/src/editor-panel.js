@@ -85,6 +85,8 @@ export default class EditorPanel extends LitElement {
         localeDefaultFragment: { type: Object, state: true },
         localeDefaultFragmentLoading: { type: Boolean, state: true },
         variationsToDelete: { type: Array, state: true },
+        showInUseDialog: { type: Boolean, state: true },
+        inUseReferences: { type: Array, state: true },
     };
 
     static styles = css`
@@ -154,6 +156,8 @@ export default class EditorPanel extends LitElement {
         this.localeDefaultFragment = null;
         this.localeDefaultFragmentLoading = false;
         this.variationsToDelete = [];
+        this.showInUseDialog = false;
+        this.inUseReferences = [];
 
         // MWPW-182720: Drag properties
         this.dragX = window.innerWidth - 480;
@@ -184,6 +188,8 @@ export default class EditorPanel extends LitElement {
         this.discardConfirmed = this.discardConfirmed.bind(this);
         this.cancelDiscard = this.cancelDiscard.bind(this);
         this.onToolbarDiscard = this.onToolbarDiscard.bind(this);
+        this.closeInUseDialog = this.closeInUseDialog.bind(this);
+        this.unpublishFragment = this.unpublishFragment.bind(this);
 
         // MWPW-182720: Drag/resize bindings
         this.startDrag = this.startDrag.bind(this);
@@ -676,6 +682,17 @@ export default class EditorPanel extends LitElement {
         this.repository.publishFragment(this.fragment);
     }
 
+    async unpublishFragment() {
+        const usageEntry = Store.fragments.usages.get()[this.fragment?.id];
+        const references = usageEntry?.references;
+        if (references?.length) {
+            this.inUseReferences = references;
+            this.showInUseDialog = true;
+            return;
+        }
+        this.repository.unpublishFragment(this.fragment);
+    }
+
     /**
      * Handler for the toolbar "Discard" action.
      * Uses the same prompt so that the user always sees a consistent confirmation.
@@ -797,7 +814,7 @@ export default class EditorPanel extends LitElement {
                     <sp-action-button
                         label="Unpublish"
                         value="unpublish"
-                        @click="${this.repository.unpublishFragment}"
+                        @click="${this.unpublishFragment}"
                         disabled
                     >
                         <sp-icon-publish-remove slot="icon"></sp-icon-publish-remove>
@@ -829,6 +846,28 @@ export default class EditorPanel extends LitElement {
                     </sp-action-button>
                 </sp-action-group>
             </div>
+        `;
+    }
+
+    closeInUseDialog() {
+        this.showInUseDialog = false;
+        this.inUseReferences = [];
+    }
+
+    get inUseDialog() {
+        if (!this.showInUseDialog) return nothing;
+        return html`
+            <sp-underlay open @click="${this.closeInUseDialog}"></sp-underlay>
+            <sp-dialog open variant="confirmation" @sp-dialog-dismiss="${this.closeInUseDialog}">
+                <h1 slot="heading">Fragment in use</h1>
+                <p>This fragment is referenced by the following collection(s) and cannot be modified:</p>
+                <ul>
+                    ${this.inUseReferences.map(
+                        (ref) => html`<li><a href="${ref.path}" target="_blank" rel="noopener">${ref.title || ref.path}</a></li>`,
+                    )}
+                </ul>
+                <sp-button slot="button" variant="secondary" @click="${this.closeInUseDialog}">Close</sp-button>
+            </sp-dialog>
         `;
     }
 
@@ -1049,7 +1088,7 @@ export default class EditorPanel extends LitElement {
                     <sp-divider size="s"></sp-divider>
                     ${this.fragmentEditor}
                 </div>
-                ${this.deleteConfirmationDialog} ${this.discardConfirmationDialog} ${this.cloneConfirmationDialog}
+                ${this.inUseDialog} ${this.deleteConfirmationDialog} ${this.discardConfirmationDialog} ${this.cloneConfirmationDialog}
 
                 <div class="resize-handle resize-n" @mousedown="${(e) => this.startResize('n', e)}"></div>
                 <div class="resize-handle resize-s" @mousedown="${(e) => this.startResize('s', e)}"></div>

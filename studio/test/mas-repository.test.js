@@ -1973,4 +1973,53 @@ describe('MasRepository dictionary helpers', () => {
             expect(fragmentDeletedEmitStub.calledOnceWith(fragment)).to.be.true;
         });
     });
+
+    describe('loadFragmentUsages', () => {
+        it('excludes variation back-references from usage count', async () => {
+            const { default: Store } = await import('../src/store.js');
+            const repository = createRepository();
+            const fragment = createFragment({ id: 'frag-1', path: '/content/dam/frag-1' });
+            repository.aem = {
+                sites: {
+                    cf: {
+                        fragments: {
+                            getReferencedBy: sandbox.stub().resolves({
+                                parentReferences: [
+                                    { type: 'content-fragment', path: '/col/a', title: 'Collection A', field: 'cards' },
+                                    { type: 'content-fragment', path: '/card/parent', title: 'Parent Card', field: 'variations' },
+                                ],
+                            }),
+                        },
+                    },
+                },
+            };
+            await repository.loadFragmentUsages(fragment);
+            const usages = Store.fragments.usages.get()[fragment.id];
+            expect(usages.references).to.have.length(1);
+            expect(usages.references[0].path).to.equal('/col/a');
+        });
+
+        it('includes refs with no field property (legacy API shape)', async () => {
+            const { default: Store } = await import('../src/store.js');
+            const repository = createRepository();
+            const fragment = createFragment({ id: 'frag-2', path: '/content/dam/frag-2' });
+            repository.aem = {
+                sites: {
+                    cf: {
+                        fragments: {
+                            getReferencedBy: sandbox.stub().resolves({
+                                parentReferences: [
+                                    { type: 'content-fragment', path: '/col/b', title: 'Col B' },
+                                ],
+                            }),
+                        },
+                    },
+                },
+            };
+            await repository.loadFragmentUsages(fragment);
+            const usages = Store.fragments.usages.get()[fragment.id];
+            expect(usages.references).to.have.length(1);
+            expect(usages.references[0].path).to.equal('/col/b');
+        });
+    });
 });

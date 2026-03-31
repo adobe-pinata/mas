@@ -1928,7 +1928,7 @@ export class MasRepository extends LitElement {
         try {
             const result = await this.aem.sites.cf.fragments.getReferencedBy(fragment.path);
             const references = (result.parentReferences || []).filter(
-                (ref) => ref.type === 'content-fragment',
+                (ref) => ref.type === 'content-fragment' && ref.field !== 'variations',
             );
             Store.fragments.usages.set({ ...Store.fragments.usages.get(), [id]: { loading: false, references, traffic: null } });
         } catch {

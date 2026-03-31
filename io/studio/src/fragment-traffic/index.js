@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Fragment Traffic App Builder Action
  *
@@ -16,8 +14,8 @@
  *   }
  */
 
-const { Core, Files, State } = require('@adobe/aio-sdk');
-const { errorResponse } = require('../../utils');
+import { Core, State } from '@adobe/aio-sdk';
+import { errorResponse } from '../../utils.js';
 
 const logger = Core.Logger('fragment-traffic', { level: 'info' });
 
@@ -136,10 +134,11 @@ async function handleRefresh(params) {
     for (const row of rows) {
         const id = extractFragmentId(row.path);
         if (!id) continue;
-        if (!buckets[id]) buckets[id] = { lastHour: 0, lastDay: 0, lastMonth: 0 };
+        if (!buckets[id]) buckets[id] = { lastHour: 0, prevHour: 0, lastDay: 0, lastMonth: 0 };
         const ts = new Date(row.hour).getTime();
         const age = nowMs - ts;
         if (age <= hourMs) buckets[id].lastHour += row.count;
+        if (age > hourMs && age <= 2 * hourMs) buckets[id].prevHour += row.count;
         if (age <= dayMs) buckets[id].lastDay += row.count;
         if (age <= monthMs) buckets[id].lastMonth += row.count;
     }
@@ -148,14 +147,14 @@ async function handleRefresh(params) {
     try {
         stateLib = await State.init();
     } catch {
-        // Fallback: store in AIO Files if State is unavailable
+        // State unavailable; skip persisting buckets this run
         stateLib = null;
     }
 
     const entries = Object.entries(buckets);
     for (const [id, counts] of entries) {
         const value = JSON.stringify({
-            lastHour: { count: counts.lastHour, trend: null },
+            lastHour: { count: counts.lastHour, trend: trendPercent(counts.lastHour, counts.prevHour) },
             lastDay: { count: counts.lastDay, trend: trendPercent(counts.lastDay, counts.lastHour * 24) },
             lastMonth: { count: counts.lastMonth, trend: trendPercent(counts.lastMonth, counts.lastDay * 30) },
             updatedAt: now.toISOString(),
@@ -229,4 +228,4 @@ async function main(params) {
     }
 }
 
-module.exports = { main };
+export { main };
