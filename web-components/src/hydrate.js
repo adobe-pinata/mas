@@ -680,20 +680,42 @@ function createConsonantButton(
     return button;
 }
 
-export function processCTAs(fields, merchCard, aemFragmentMapping, variant) {
+export function processCTAs(
+    fields,
+    merchCard,
+    aemFragmentMapping,
+    variant,
+    settings,
+) {
     if (fields.ctas) {
-        // Process tooltips in CTAs
         fields.ctas = processMnemonicElements(fields.ctas);
 
         const { slot } = aemFragmentMapping.ctas;
         const footer = createTag('div', { slot }, fields.ctas);
-        const ctas = [...footer.querySelectorAll('a')].map((cta) =>
-            transformLinkToButton(cta, merchCard, aemFragmentMapping),
-        );
+        const ctas = [...footer.querySelectorAll('a')]
+            .filter((cta) => {
+                if (!settings?.hideTrialCTAs) return true;
+                return !cta.dataset.analyticsId?.includes('trial');
+            })
+            .map((cta) =>
+                transformLinkToButton(cta, merchCard, aemFragmentMapping),
+            );
 
-        footer.innerHTML = '';
+        footer.textContent = '';
         footer.append(...ctas);
         merchCard.append(footer);
+
+        if (settings?.hideTrialCTAs) {
+            ctas.forEach((cta) => {
+                const checkout = cta.source ?? cta;
+                if (!checkout.onceSettled) return;
+                checkout.onceSettled().then(() => {
+                    if (checkout.value?.[0]?.offerType === 'TRIAL') {
+                        cta.remove();
+                    }
+                });
+            });
+        }
     }
 }
 
@@ -826,7 +848,7 @@ export async function hydrate(fragment, merchCard) {
         // UptLink construction may fail (customized built-in element timing);
         // must not block remaining hydration steps.
     }
-    processCTAs(fields, merchCard, mapping, variant);
+    processCTAs(fields, merchCard, mapping, variant, settings);
     processAnalytics(fields, merchCard);
     updateLinksCSS(merchCard);
 }
