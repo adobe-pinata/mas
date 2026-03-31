@@ -58,7 +58,7 @@ jobs:
         with:
           repository: joaquinrivero/agentic-harness
           token: ${{ steps.harness-token.outputs.token }}
-          path: harness
+          path: /home/runner/harness
 
       - name: Validate inputs
         env:
@@ -81,5 +81,5 @@ jobs:
           EVENT_TYPE: ${{ github.event.inputs.event_type || github.event.action || 'workflow_dispatch' }}
           SOURCE_REPO: ${{ github.repository }}
         run: |
-          cd harness
+          cd /home/runner/harness
           claude --settings '{"hooks":{"SessionStart":[],"PreToolUse":[],"PostToolUse":[],"Notification":[],"Stop":[],"SubagentStop":[],"PreCompact":[],"UserPromptSubmit":[],"SessionEnd":[]}}' -p "/app:pinata:review \"${SOURCE_REPO}\" \"${PR_NUMBER}\" \"${EVENT_TYPE}\""
