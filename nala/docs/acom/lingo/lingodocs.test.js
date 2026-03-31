@@ -27,8 +27,7 @@ test.describe('ACOM MAS Lingo cards feature test suite', () => {
     });
 
     // @MAS-Lingo-Product
-    // fixme: blocked on MWPW-186822 fragment UUIDs
-    test.fixme(`${features[0].name},${features[0].tags}`, async () => {
+    test(`${features[0].name},${features[0].tags}`, async () => {
         const { data } = features[0];
         let lingoPage;
 
@@ -41,16 +40,13 @@ test.describe('ACOM MAS Lingo cards feature test suite', () => {
 
         await test.step('step-2: Verify Lingo Product Merch Card', async () => {
             await lingoPage.waitForCard(data.id);
-            if (data.title) {
-                await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
-            }
+            await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
             await expect(lingoPage.getCardCTA(data.id)).toBeVisible();
         });
     });
 
     // @MAS-Lingo-Special-Offers
-    // fixme: blocked on MWPW-186824 fragment UUIDs
-    test.fixme(`${features[1].name},${features[1].tags}`, async () => {
+    test(`${features[1].name},${features[1].tags}`, async () => {
         const { data } = features[1];
         let lingoPage;
 
@@ -63,16 +59,13 @@ test.describe('ACOM MAS Lingo cards feature test suite', () => {
 
         await test.step('step-2: Verify Lingo Special Offers Merch Card', async () => {
             await lingoPage.waitForCard(data.id);
-            if (data.title) {
-                await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
-            }
+            await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
             await expect(lingoPage.getCardCTA(data.id)).toBeVisible();
         });
     });
 
     // @MAS-Lingo-Image
-    // fixme: blocked on MWPW-186817 fragment UUIDs
-    test.fixme(`${features[2].name},${features[2].tags}`, async () => {
+    test(`${features[2].name},${features[2].tags}`, async () => {
         const { data } = features[2];
         let lingoPage;
 
@@ -85,16 +78,13 @@ test.describe('ACOM MAS Lingo cards feature test suite', () => {
 
         await test.step('step-2: Verify Lingo Image Merch Card', async () => {
             await lingoPage.waitForCard(data.id);
-            if (data.title) {
-                await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
-            }
+            await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
             await expect(lingoPage.getCardCTA(data.id)).toBeVisible();
         });
     });
 
     // @MAS-Lingo-Mini-Compare
-    // fixme: blocked on MWPW-186821 fragment UUIDs
-    test.fixme(`${features[3].name},${features[3].tags}`, async () => {
+    test(`${features[3].name},${features[3].tags}`, async () => {
         const { data } = features[3];
         let lingoPage;
 
@@ -107,16 +97,13 @@ test.describe('ACOM MAS Lingo cards feature test suite', () => {
 
         await test.step('step-2: Verify Lingo Mini Compare Merch Card', async () => {
             await lingoPage.waitForCard(data.id);
-            if (data.title) {
-                await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
-            }
+            await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
             await expect(lingoPage.getCardCTA(data.id)).toBeVisible();
         });
     });
 
     // @MAS-Lingo-Segment
-    // fixme: blocked on MWPW-186818 fragment UUIDs
-    test.fixme(`${features[4].name},${features[4].tags}`, async () => {
+    test(`${features[4].name},${features[4].tags}`, async () => {
         const { data } = features[4];
         let lingoPage;
 
@@ -129,9 +116,7 @@ test.describe('ACOM MAS Lingo cards feature test suite', () => {
 
         await test.step('step-2: Verify Lingo Segment Merch Card', async () => {
             await lingoPage.waitForCard(data.id);
-            if (data.title) {
-                await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
-            }
+            await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
             await expect(lingoPage.getCardCTA(data.id)).toBeVisible();
         });
     });
