@@ -24,7 +24,8 @@ class MasFragmentRender extends LitElement {
         super.update(changedProperties);
     }
 
-    select() {
+    select(event) {
+        event?.stopPropagation();
         toggleSelection(this.fragment.id);
     }
 
@@ -104,7 +105,7 @@ class MasFragmentRender extends LitElement {
             return nothing;
         }
 
-        return html`<div class="render-fragment">
+        return html`<div class="render-fragment${this.selected ? ' selected' : ''}">
             <div class="render-fragment-header">
                 <div class="render-fragment-actions"></div>
                 <mas-fragment-status variant=${this.fragment.statusVariant}></mas-fragment-status>
