@@ -414,6 +414,7 @@ mas-content {
     --table-content-offer-id-flex-grow: 0.3;
     --table-content-offer-type-flex-grow: 0.4;
     --table-content-last-modified-by-flex-grow: 0.7;
+    --table-content-last-modified-flex-grow: 0.7;
     --table-content-price-flex-grow: 0.7;
     --table-content-status-flex-grow: 0.3;
     --table-content-actions-flex-grow: 0.2;
@@ -524,6 +525,10 @@ sp-table-cell {
     &.last-modified-by {
         flex-grow: var(--table-content-last-modified-by-flex-grow);
         word-break: break-word;
+    }
+
+    &.last-modified {
+        flex-grow: var(--table-content-last-modified-flex-grow);
     }
 
     &.price {
@@ -647,6 +652,10 @@ sp-table-head-cell {
 
     &.last-modified-by {
         flex-grow: var(--table-content-last-modified-by-flex-grow);
+    }
+
+    &.last-modified {
+        flex-grow: var(--table-content-last-modified-flex-grow);
     }
 
     &.price {
