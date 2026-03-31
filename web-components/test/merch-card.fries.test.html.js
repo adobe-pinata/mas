@@ -60,6 +60,18 @@ runTests(async () => {
             ).to.equal('var(--spectrum-seafoam-100)');
         });
 
+        it('should apply gradient-border attribute for gradient border color', async () => {
+            const gradientCard = document.getElementById(
+                'fries-card-gradient-border',
+            );
+            expect(gradientCard.getAttribute('gradient-border')).to.equal(
+                'true',
+            );
+            expect(gradientCard.getAttribute('border-color')).to.equal(
+                'gradient',
+            );
+        });
+
         it('should have proper buttons with correct styling', async () => {
             const ctaButton = merchCard.querySelector(
                 '.spectrum-Button--primary',
