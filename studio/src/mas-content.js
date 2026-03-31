@@ -30,6 +30,7 @@ class MasContent extends LitElement {
     selection = new StoreController(this, Store.selection);
     search = new StoreController(this, Store.search);
     filters = new StoreController(this, Store.filters);
+    sort = new StoreController(this, Store.sort);
 
     connectedCallback() {
         super.connectedCallback();
@@ -108,6 +109,32 @@ class MasContent extends LitElement {
         Store.selection.set(Array.from(event.target.selectedSet));
     }
 
+    #handleSort(event) {
+        const { sortKey, sortDirection } = event.detail;
+        Store.sort.set({ sortBy: sortKey, sortDirection });
+    }
+
+    #sortFragments(fragmentStores) {
+        const { sortBy, sortDirection } = Store.sort.get();
+        if (!sortBy) return fragmentStores;
+        const dir = sortDirection === 'desc' ? -1 : 1;
+        return [...fragmentStores].sort((a, b) => {
+            const fa = a.get();
+            const fb = b.get();
+            if (sortBy === 'title') {
+                const ta = (fa.title || '').toLowerCase();
+                const tb = (fb.title || '').toLowerCase();
+                return ta < tb ? -dir : ta > tb ? dir : 0;
+            }
+            if (sortBy === 'lastModified') {
+                const ta = fa.modified?.at || '';
+                const tb = fb.modified?.at || '';
+                return ta < tb ? -dir : ta > tb ? dir : 0;
+            }
+            return 0;
+        });
+    }
+
     /** @param {import('./reactivity/fragment-store.js').FragmentStore[]} fragmentStores */
     /** Non-country mas:pzn tag ids selected in the filter panel (narrow the Personalization group only). */
     #getSelectedPersonalizationTagIds() {
@@ -162,7 +189,9 @@ class MasContent extends LitElement {
     }
 
     get tableView() {
-        const fragmentStores = this.fragments.value.filter((fragmentStore) => fragmentStore.get() !== null);
+        const fragmentStores = this.#sortFragments(
+            this.fragments.value.filter((fragmentStore) => fragmentStore.get() !== null),
+        );
         const personalizationOn = Store.filters.get().personalizationFilterEnabled === true;
         const body = personalizationOn
             ? this.#renderTableBodyGrouped(fragmentStores)
@@ -178,14 +207,16 @@ class MasContent extends LitElement {
             selects=${this.selecting.value ? 'multiple' : undefined}
             selected=${JSON.stringify(this.selection.value)}
             @change=${this.updateTableSelection}
+            @sorted=${this.#handleSort}
         >
             <sp-table-head>
                 <sp-table-head-cell class="expand-cell"></sp-table-head-cell>
                 <sp-table-head-cell sortable class="name">Path</sp-table-head-cell>
-                <sp-table-head-cell sortable class="title">Fragment Title</sp-table-head-cell>
+                <sp-table-head-cell sortable sort-key="title" class="title">Fragment Title</sp-table-head-cell>
                 <sp-table-head-cell sortable class="offer-id">Offer ID</sp-table-head-cell>
                 <sp-table-head-cell sortable class="offer-type">Offer Type</sp-table-head-cell>
                 <sp-table-head-cell sortable class="last-modified-by">Last Modified By</sp-table-head-cell>
+                <sp-table-head-cell sortable sort-key="lastModified" class="last-modified">Last Modified</sp-table-head-cell>
                 <sp-table-head-cell sortable class="price">Price</sp-table-head-cell>
                 <sp-table-head-cell sortable class="status">Status</sp-table-head-cell>
                 <sp-table-head-cell class="actions">Actions</sp-table-head-cell>
