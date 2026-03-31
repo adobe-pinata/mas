@@ -1,6 +1,7 @@
 // Docs gallery tests use base @playwright/test (not masTest) — masTest fixtures
 // (fragment tracking, request counting) are for Studio tests. Docs tests use
 // createWorkerPageSetup for shared page lifecycle instead.
+// See nala/docs/acom/plansdocs.test.js for the canonical docs-test precedent.
 import { expect, test } from '@playwright/test';
 import { features } from './lingodocs.spec.js';
 import MasLingo from './lingo.page.js';
@@ -39,7 +40,7 @@ test.describe('ACOM MAS Lingo cards feature test suite', () => {
         });
 
         await test.step('step-2: Verify Lingo Product Merch Card', async () => {
-            await expect(lingoPage.getCard(data.id)).toBeVisible();
+            await lingoPage.waitForCard(data.id);
             if (data.title) {
                 await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
             }
@@ -61,7 +62,7 @@ test.describe('ACOM MAS Lingo cards feature test suite', () => {
         });
 
         await test.step('step-2: Verify Lingo Special Offers Merch Card', async () => {
-            await expect(lingoPage.getCard(data.id)).toBeVisible();
+            await lingoPage.waitForCard(data.id);
             if (data.title) {
                 await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
             }
@@ -83,7 +84,7 @@ test.describe('ACOM MAS Lingo cards feature test suite', () => {
         });
 
         await test.step('step-2: Verify Lingo Image Merch Card', async () => {
-            await expect(lingoPage.getCard(data.id)).toBeVisible();
+            await lingoPage.waitForCard(data.id);
             if (data.title) {
                 await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
             }
@@ -105,7 +106,7 @@ test.describe('ACOM MAS Lingo cards feature test suite', () => {
         });
 
         await test.step('step-2: Verify Lingo Mini Compare Merch Card', async () => {
-            await expect(lingoPage.getCard(data.id)).toBeVisible();
+            await lingoPage.waitForCard(data.id);
             if (data.title) {
                 await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
             }
@@ -127,7 +128,7 @@ test.describe('ACOM MAS Lingo cards feature test suite', () => {
         });
 
         await test.step('step-2: Verify Lingo Segment Merch Card', async () => {
-            await expect(lingoPage.getCard(data.id)).toBeVisible();
+            await lingoPage.waitForCard(data.id);
             if (data.title) {
                 await expect(lingoPage.getCardTitle(data.id)).toContainText(data.title);
             }

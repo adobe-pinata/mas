@@ -7,6 +7,16 @@ export default class MasLingo {
         return this.page.locator(`merch-card:has(aem-fragment[fragment="${id}"])`);
     }
 
+    async waitForCard(id) {
+        const card = this.getCard(id);
+        await card.waitFor({ state: 'visible' });
+        await this.page.waitForFunction(
+            (selector) => document.querySelector(selector)?.closest('merch-card')?.readyState === 'done',
+            `merch-card:has(aem-fragment[fragment="${id}"])`,
+        );
+        return card;
+    }
+
     getCardTitle(id) {
         const card = this.getCard(id);
         return card.locator('h3[slot="heading-xs"]');

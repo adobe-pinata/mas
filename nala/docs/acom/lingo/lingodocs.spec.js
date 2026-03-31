@@ -10,7 +10,8 @@ export const features = [
             id: '', // FIXME(MWPW-186822): populate with Product fragment UUID
             title: '',
         },
-        tags: '@mas-docs @mas-acom @mas-lingo-card @commerce @smoke @regression',
+        // @smoke @regression added once MWPW-186822 UUIDs are populated
+        tags: '@mas-docs @mas-acom @mas-lingo-card @commerce',
     },
     {
         tcid: '1',
@@ -20,7 +21,8 @@ export const features = [
             id: '', // FIXME(MWPW-186824): populate with Special Offers fragment UUID
             title: '',
         },
-        tags: '@mas-docs @mas-acom @mas-lingo-card @commerce @smoke @regression',
+        // @smoke @regression added once MWPW-186824 UUIDs are populated
+        tags: '@mas-docs @mas-acom @mas-lingo-card @commerce',
     },
     {
         tcid: '2',
@@ -30,7 +32,8 @@ export const features = [
             id: '', // FIXME(MWPW-186817): populate with Image fragment UUID
             title: '',
         },
-        tags: '@mas-docs @mas-acom @mas-lingo-card @commerce @smoke @regression',
+        // @smoke @regression added once MWPW-186817 UUIDs are populated
+        tags: '@mas-docs @mas-acom @mas-lingo-card @commerce',
     },
     {
         tcid: '3',
@@ -40,7 +43,8 @@ export const features = [
             id: '', // FIXME(MWPW-186821): populate with Mini Compare fragment UUID
             title: '',
         },
-        tags: '@mas-docs @mas-acom @mas-lingo-card @commerce @smoke @regression',
+        // @smoke @regression added once MWPW-186821 UUIDs are populated
+        tags: '@mas-docs @mas-acom @mas-lingo-card @commerce',
     },
     {
         tcid: '4',
@@ -50,6 +54,7 @@ export const features = [
             id: '', // FIXME(MWPW-186818): populate with Segment fragment UUID
             title: '',
         },
-        tags: '@mas-docs @mas-acom @mas-lingo-card @commerce @smoke @regression',
+        // @smoke @regression added once MWPW-186818 UUIDs are populated
+        tags: '@mas-docs @mas-acom @mas-lingo-card @commerce',
     },
 ];
