@@ -161,6 +161,13 @@ class MasFilterPanel extends LitElement {
         }
     }
 
+    get #hasActiveFilters() {
+        return (
+            Object.values(this.tagsByType).some((tags) => tags.length > 0) ||
+            Store.createdByUsers.value.length > 0
+        );
+    }
+
     get #personalizationFilterEnabled() {
         return Store.filters.get().personalizationFilterEnabled === true;
     }
@@ -368,10 +375,6 @@ class MasFilterPanel extends LitElement {
                     .users=${Store.users}
                 ></mas-user-picker>
 
-                <sp-action-button quiet @click=${this.#handleRefresh} title="Clear all filters"
-                    >Reset Filters
-                    <sp-icon-refresh slot="icon"></sp-icon-refresh>
-                </sp-action-button>
             </div>
             <sp-tags>
                 ${repeat(
@@ -386,6 +389,12 @@ class MasFilterPanel extends LitElement {
                     `,
                 )}
                 ${this.createdByUsersTags}
+                ${this.#hasActiveFilters
+                    ? html`<sp-action-button quiet @click=${this.#handleRefresh} title="Clear all filters"
+                          >Reset Filters
+                          <sp-icon-refresh slot="icon"></sp-icon-refresh>
+                      </sp-action-button>`
+                    : nothing}
             </sp-tags>
         `;
     }
