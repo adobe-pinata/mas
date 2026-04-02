@@ -503,6 +503,8 @@ sp-table-cell {
     &.name {
         gap: 8px;
         flex-grow: var(--table-content-name-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
 
         & img {
             width: 24px;
@@ -513,25 +515,35 @@ sp-table-cell {
 
     &.title {
         flex-grow: var(--table-content-title-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
         word-break: break-word;
     }
 
     &.offer-type {
         flex-grow: var(--table-content-offer-type-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
         word-break: break-all;
     }
 
     &.last-modified-by {
         flex-grow: var(--table-content-last-modified-by-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
         word-break: break-word;
     }
 
     &.price {
         flex-grow: var(--table-content-price-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
     }
 
     &.offer-id {
         flex-grow: var(--table-content-offer-id-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
         gap: 8px;
 
         .copy-icon-button {
@@ -558,9 +570,10 @@ sp-table-cell {
 
     &.status {
         flex-grow: var(--table-content-status-flex-grow);
+        flex-basis: 0;
+        min-width: 100px;
         gap: 6px;
         justify-content: flex-start;
-        min-width: 100px;
 
         .status-dot {
             width: 8px;
@@ -585,6 +598,8 @@ sp-table-cell {
 
     &.actions {
         flex-grow: var(--table-content-actions-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
         justify-content: center;
 
         sp-action-menu {
@@ -605,6 +620,8 @@ sp-table-cell {
     &.preview {
         /* padding-right: 10px; */
         flex-grow: var(--table-content-preview-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
         justify-content: flex-end;
         cursor: pointer;
 
@@ -635,39 +652,56 @@ sp-table-head-cell {
 
     &.name {
         flex-grow: var(--table-content-name-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
     }
 
     &.title {
         flex-grow: var(--table-content-title-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
     }
 
     &.offer-type {
         flex-grow: var(--table-content-offer-type-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
     }
 
     &.last-modified-by {
         flex-grow: var(--table-content-last-modified-by-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
     }
 
     &.price {
         flex-grow: var(--table-content-price-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
     }
 
     &.offer-id {
         flex-grow: var(--table-content-offer-id-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
     }
 
     &.status {
         flex-grow: var(--table-content-status-flex-grow);
+        flex-basis: 0;
         min-width: 100px;
     }
 
     &.actions {
         flex-grow: var(--table-content-actions-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
     }
 
     &.preview {
         flex-grow: var(--table-content-preview-flex-grow);
+        flex-basis: 0;
+        min-width: 0;
     }
 }
 

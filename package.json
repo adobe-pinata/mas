@@ -24,7 +24,7 @@
         "url": "git@github.com:adobecom/mas.git"
     },
     "dependencies": {
-        "@playwright/test": "^1.56.1",
+"@playwright/test": "^1.56.1",
         "@spectrum-css/button": "^13.5.0",
         "@spectrum-css/link": "^5.2.0",
         "@spectrum-css/page": "^8.2.0",
