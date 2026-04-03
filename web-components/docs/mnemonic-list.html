@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>M@S Merch Mnemonic List</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="../styles/styles.css">
+<link rel="stylesheet" href="styles.css">
+<script type="module">
+  import { init } from './common.js';
+  init();
+</script>
+</head>
+<body class="spectrum spectrum--medium spectrum--light">
+<main>
+<sp-theme color="light" scale="medium">
+<div class="gallery-content">
+  <h1>Mnemonic List Gallery</h1>
+  <merch-mnemonic-list id="test-mnemonic-list">
+    <div slot="icon">
+      <merch-icon size="s" src="https://www.adobe.com/content/dam/shared/images/product-icons/svg/photoshop.svg" alt="Photoshop"></merch-icon>
+    </div>
+    <p slot="description"><strong>Photoshop</strong></p>
+  </merch-mnemonic-list>
+</div>
+</sp-theme>
+</main>
+</body>
+</html>

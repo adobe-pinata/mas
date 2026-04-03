@@ -18,7 +18,7 @@ var o=Object.defineProperty;var r=(e,t,i)=>t in e?o(e,t,{enumerable:!0,configura
         }
 
         ::slotted([slot='description']) {
-            font-size: 14px;
+            font-size: var(--type-heading-xs-size);
             line-height: 21px;
             margin: 0;
         }
