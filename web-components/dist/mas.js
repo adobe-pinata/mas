@@ -8807,7 +8807,7 @@ merch-card[border-color="spectrum-red-700-plans"] {
         }
 
         ::slotted([slot='description']) {
-            font-size: 14px;
+            font-size: var(--type-heading-xs-size);
             line-height: 21px;
             margin: 0;
         }

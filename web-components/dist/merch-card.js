@@ -8300,7 +8300,7 @@ Caused by: ${this.cause}`),e}};var oe={clientId:"merch-at-scale",delimiter:"\xB6
         }
 
         ::slotted([slot='description']) {
-            font-size: 14px;
+            font-size: var(--type-heading-xs-size);
             line-height: 21px;
             margin: 0;
         }
