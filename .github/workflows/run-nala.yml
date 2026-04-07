@@ -28,11 +28,10 @@ jobs:
     run-nala-studio-tests:
         name: Running Nala Studio E2E UI Tests
         needs: nala-gate
-        # Auto-run on PR open ONLY for upstream adobecom/mas PRs.
-        # Fork PRs (e.g. adobe-pinata/mas) must explicitly opt in via the
-        # 'run nala' label to reduce shared MAS IO catalog load.
+        # Run when PR is opened (no label needed) OR when 'run nala' label exists
+        # This covers: opened (always), synchronize (if label exists), labeled (if label exists)
         if: |
-            (github.event.action == 'opened' && github.event.pull_request.head.repo.full_name == 'adobecom/mas') ||
+            github.event.action == 'opened' ||
             contains(github.event.pull_request.labels.*.name, 'run nala')
         runs-on: [self-hosted, Linux, X64]
         timeout-minutes: 30 # Prevent hanging jobs
@@ -110,11 +109,10 @@ jobs:
     run-nala-docs-tests:
         name: Running Nala Docs E2E UI Tests
         needs: nala-gate
-        # Auto-run on PR open ONLY for upstream adobecom/mas PRs.
-        # Fork PRs (e.g. adobe-pinata/mas) must explicitly opt in via the
-        # 'run nala' label to reduce shared MAS IO catalog load.
+        # Run when PR is opened (no label needed) OR when 'run nala' label exists
+        # This covers: opened (always), synchronize (if label exists), labeled (if label exists)
         if: |
-            (github.event.action == 'opened' && github.event.pull_request.head.repo.full_name == 'adobecom/mas') ||
+            github.event.action == 'opened' ||
             contains(github.event.pull_request.labels.*.name, 'run nala')
         runs-on: ubuntu-latest
         timeout-minutes: 20 # Prevent hanging jobs

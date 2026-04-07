@@ -33,22 +33,6 @@ toRepoName=${repoParts[1]}
 prRepo=${prRepo:-$toRepoName}
 prOrg=${prOrg:-$toRepoOrg}
 
-# Nala preview on forks:
-# When running on the adobe-pinata/mas fork, AEM Edge Delivery does not build
-# adobe-pinata.aem.live previews, and IMS does not whitelist that host as a
-# redirect URI. Redirect Nala to the corresponding branch preview on
-# adobecom/mas so authentication and the preview URL resolve correctly.
-# The branch must exist on adobecom/mas for this to work.
-if [[ "$prOrg" == "adobe-pinata" ]]; then
-  echo "Fork detected (adobe-pinata) - redirecting Nala preview to adobecom/mas"
-  prOrg="adobecom"
-  prRepo="mas"
-  # Soften shared MAS IO catalog load on fork PRs: no retries, fewer workers.
-  # Upstream adobecom/mas runs are unaffected.
-  export PWTEST_RETRIES=0
-  export PLAYWRIGHT_WORKERS=2
-fi
-
 PR_BRANCH_LIVE_URL_GH="https://$FEATURE_BRANCH--$prRepo--$prOrg.aem.live"
 
 # set pr branch url as env
