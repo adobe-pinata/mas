@@ -43,6 +43,10 @@ if [[ "$prOrg" == "adobe-pinata" ]]; then
   echo "Fork detected (adobe-pinata) - redirecting Nala preview to adobecom/mas"
   prOrg="adobecom"
   prRepo="mas"
+  # Soften shared MAS IO catalog load on fork PRs: no retries, fewer workers.
+  # Upstream adobecom/mas runs are unaffected.
+  export PWTEST_RETRIES=0
+  export PLAYWRIGHT_WORKERS=2
 fi
 
 PR_BRANCH_LIVE_URL_GH="https://$FEATURE_BRANCH--$prRepo--$prOrg.aem.live"

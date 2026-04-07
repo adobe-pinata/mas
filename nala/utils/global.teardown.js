@@ -158,14 +158,20 @@ async function cleanupClonedCards() {
         const baseURL =
             process.env.PR_BRANCH_LIVE_URL || process.env.LOCAL_TEST_LIVE_URL || 'https://main--mas--adobecom.aem.live';
 
-        // Define paths to check for fragments (different locales/views)
-        const pathsToCheck = [
-            '#page=content&path=nala', // Default path
-            '#locale=fr_FR&page=content&path=nala', // French locale path
-            '#locale=en_CA&page=content&path=nala', // Canadian locale path
-            '#locale=en_GB&page=content&path=nala', // British locale path
-            '#locale=en_AU&page=content&path=nala', // Australian locale path
-        ];
+        // Define paths to check for fragments (different locales/views).
+        // On fork PRs (adobe-pinata/mas), only check fr_FR (the canonical
+        // nala test fragment locale per .claude/rules/testing-nala.md) to
+        // reduce shared MAS IO catalog load. Upstream runs check all 5.
+        const isForkRun = process.env.GITHUB_REPOSITORY === 'adobe-pinata/mas';
+        const pathsToCheck = isForkRun
+            ? ['#locale=fr_FR&page=content&path=nala']
+            : [
+                  '#page=content&path=nala',
+                  '#locale=fr_FR&page=content&path=nala',
+                  '#locale=en_CA&page=content&path=nala',
+                  '#locale=en_GB&page=content&path=nala',
+                  '#locale=en_AU&page=content&path=nala',
+              ];
 
         let totalFragmentsFound = 0;
         let totalFragmentsDeleted = 0;
