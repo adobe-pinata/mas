@@ -2,7 +2,7 @@ import { expect, fixture, html } from '@open-wc/testing';
 import '../src/swc.js';
 import { Fragment } from '../src/aem/fragment.js';
 import Store from '../src/store.js';
-import { CARD_MODEL_PATH } from '../src/constants.js';
+import { CARD_MODEL_PATH, PAGE_NAMES } from '../src/constants.js';
 import '../src/mas-content.js';
 
 describe('MasContent table + personalization grouping', () => {
@@ -13,6 +13,8 @@ describe('MasContent table + personalization grouping', () => {
         const list = Store.fragments.list.data;
         snapshot = {
             renderMode: Store.renderMode.get(),
+            page: Store.page.get(),
+            sort: Store.sort.get(),
             filters: {
                 locale: f.locale,
                 tags: f.tags,
@@ -23,12 +25,15 @@ describe('MasContent table + personalization grouping', () => {
             loading: Store.fragments.list.loading.get(),
             firstPageLoaded: Store.fragments.list.firstPageLoaded.get(),
         };
+        Store.page.set(PAGE_NAMES.CONTENT);
         Store.search.set({ path: 'acom' });
         Store.fragments.list.loading.set(false);
         Store.fragments.list.firstPageLoaded.set(true);
     });
 
     afterEach(() => {
+        Store.page.set(snapshot.page);
+        Store.sort.set(snapshot.sort);
         Store.renderMode.set(snapshot.renderMode);
         Store.filters.set(snapshot.filters);
         Store.search.set(snapshot.search);
