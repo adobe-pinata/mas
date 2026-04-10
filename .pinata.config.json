@@ -1,0 +1,24 @@
+{
+  "source_app": "mas",
+  "name": "mas",
+  "app_name": "mas",
+  "github_repo": "adobecom/mas-pinata",
+  "github_app_installation_id": "118879229",
+  "default_branch": "main",
+  "branch_naming": "jira",
+  "r2_bucket": "pinata-mas",
+  "artifacts": {
+    "specs": "r2",
+    "docs": "r2",
+    "kpis": "harness"
+  },
+  "services": [
+    { "name": "aem",    "env_var": "AEM_PORT",    "default": 3000 },
+    { "name": "studio", "env_var": "STUDIO_PORT",  "default": 3100 },
+    { "name": "wc",     "env_var": "WC_PORT",      "default": 3200 }
+  ],
+  "libs_service": "aem",
+  "libs_param": "maslibs",
+  "libs_param_value": "local",
+  "depends_on": []
+}
