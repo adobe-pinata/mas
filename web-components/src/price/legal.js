@@ -34,6 +34,7 @@ function renderContainer(
     markup += renderSpan(
         cssClassNames.taxInclusivity,
         taxInclusivityLabel,
+        null,
         true,
     );
     markup += renderSpan(cssClassNames.planType, planTypeLabel, null);

@@ -198,6 +198,7 @@ function renderContainer(
     markup += renderSpan(
         cssClassNames.taxInclusivity,
         taxInclusivityLabel,
+        null,
         true,
     );
 
