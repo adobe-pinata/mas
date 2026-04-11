@@ -46,18 +46,17 @@ jobs:
               with:
                   app-id: ${{ secrets.PINATA_APP_ID }}
                   private-key: ${{ secrets.PINATA_APP_PRIVATE_KEY }}
-                  # NOTE: harness repo is currently under a personal account — update if it moves to the org
-                  repositories: agentic-harness
-                  owner: joaquinrivero
+                  repositories: pinata
+                  owner: adobe-pinata
 
             - name: Install Claude Code
               # TODO: unpin once upstream fix lands (2.1.88 broke skill resolution in -p mode)
               run: npm install -g @anthropic-ai/claude-code@2.1.87
 
-            - name: Checkout agentic-harness
+            - name: Checkout harness
               uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
               with:
-                  repository: joaquinrivero/agentic-harness
+                  repository: adobe-pinata/pinata
                   token: ${{ steps.harness-token.outputs.token }}
                   path: harness
 

@@ -80,16 +80,15 @@ jobs:
               with:
                   app-id: ${{ secrets.PINATA_APP_ID }}
                   private-key: ${{ secrets.PINATA_APP_PRIVATE_KEY }}
-                  # NOTE: harness repo is currently under a personal account — update if it moves to the org
-                  repositories: agentic-harness
-                  owner: joaquinrivero
+                  repositories: pinata
+                  owner: adobe-pinata
 
             - name: Dispatch to harness knowledge-bot
               if: ${{ !cancelled() }}
               uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3
               with:
                   token: ${{ steps.harness-token.outputs.token }}
-                  repository: joaquinrivero/agentic-harness
+                  repository: adobe-pinata/pinata
                   event-type: pinata-knowledge-bot
                   client-payload: |
                       {
