@@ -1,0 +1,20 @@
+{
+  "source_app": "mas",
+  "name": "mas",
+  "app_name": "mas",
+  "github_repo": "antonio-rmrz/mas",
+  "default_branch": "main",
+  "r2_bucket": "pod_mas",
+  "branch_naming": "jira",
+  "artifacts": {
+    "specs": "repo",
+    "docs": "repo",
+    "kpis": "harness"
+  },
+  "services": [
+    { "name": "aem",    "env_var": "AEM_PORT",    "default": 3000 },
+    { "name": "studio", "env_var": "STUDIO_PORT", "default": 3100 },
+    { "name": "wc",     "env_var": "WC_PORT",     "default": 3200 }
+  ],
+  "depends_on": []
+}
