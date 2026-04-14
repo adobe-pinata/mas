@@ -5,6 +5,7 @@
   "default_branch": "main",
   "r2_bucket": "agentic-mas",
   "branch_naming": "jira",
+  "branch_naming_prefixes": ["MWPW"],
   "artifacts": {
     "specs": "r2",
     "docs": "r2",
@@ -18,12 +19,13 @@
   "depends_on": [],
   "test_urls": {
     "envs": {
-      "@mas_live":    "https://main--mas-pinata--adobecom.aem.live",
-      "@mas_preview": "https://main--mas-pinata--adobecom.aem.page",
-      "@milo_live":   "https://main--milo--adobecom.aem.live",
-      "@cc_live":     "https://main--cc--adobecom.aem.live",
-      "@adobe_prod":  "https://www.adobe.com",
-      "@adobe_stage": "https://www.stage.adobe.com"
+      "@mas_live":        "https://main--mas-pinata--adobecom.aem.live",
+      "@mas_preview":     "https://main--mas-pinata--adobecom.aem.page",
+      "@mas_studio_live": "https://main--mas-pinata--adobecom.aem.live/studio.html",
+      "@milo_live":       "https://main--milo--adobecom.aem.live",
+      "@cc_live":         "https://main--cc--adobecom.aem.live",
+      "@adobe_prod":      "https://www.adobe.com",
+      "@adobe_stage":     "https://www.stage.adobe.com"
     },
     "libs_param":   "maslibs",
     "default_path": "/"
