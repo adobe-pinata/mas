@@ -32,7 +32,7 @@
     "default_path": "/"
   },
   "verify": {
-    "command": "npm run build",
+    "command": "npm run build:bundle",
     "after": ["build", "fix", "patch"],
     "cwd": ".",
     "timeout_seconds": 600,
