@@ -2,7 +2,7 @@
   "name": "mas",
   "app_name": "mas",
   "github_repo": "adobecom/mas-pinata",
-  "github_app_installation_id": "118879229",
+  "github_app_installation_id": "122955748",
   "default_branch": "main",
   "r2_bucket": "agentic-mas",
   "branch_naming": "jira",
@@ -30,5 +30,16 @@
     },
     "libs_param":   "maslibs",
     "default_path": "/"
+  },
+  "verify": {
+    "command": "npm run build",
+    "after": ["build", "fix", "patch"],
+    "cwd": ".",
+    "timeout_seconds": 600,
+    "max_attempts": 1,
+    "on_failure": {
+      "draft_pr": true,
+      "exit_nonzero": false
+    }
   }
 }
