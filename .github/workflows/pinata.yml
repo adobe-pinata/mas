@@ -81,14 +81,14 @@ jobs:
                   app-id: ${{ secrets.PINATA_APP_ID }}
                   private-key: ${{ secrets.PINATA_APP_PRIVATE_KEY }}
                   repositories: pinata
-                  owner: adobe-pinata
+                  owner: adobe-acom
 
             - name: Dispatch to harness knowledge-bot
               if: ${{ !cancelled() }}
               uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3
               with:
                   token: ${{ steps.harness-token.outputs.token }}
-                  repository: adobe-pinata/pinata
+                  repository: adobe-acom/pinata
                   event-type: pinata-knowledge-bot
                   client-payload: |
                       {

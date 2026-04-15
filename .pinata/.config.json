@@ -24,15 +24,15 @@
     "depends_on": [],
     "test_urls": {
         "envs": {
-            "@mas_live":        "https://main--mas-pinata--adobecom.aem.live",
-            "@mas_preview":     "https://main--mas-pinata--adobecom.aem.page",
+            "@mas_live": "https://main--mas-pinata--adobecom.aem.live",
+            "@mas_preview": "https://main--mas-pinata--adobecom.aem.page",
             "@mas_studio_live": "https://main--mas-pinata--adobecom.aem.live/studio.html",
-            "@milo_live":       "https://main--milo--adobecom.aem.live",
-            "@cc_live":         "https://main--cc--adobecom.aem.live",
-            "@adobe_prod":      "https://www.adobe.com",
-            "@adobe_stage":     "https://www.stage.adobe.com"
+            "@milo_live": "https://main--milo--adobecom.aem.live",
+            "@cc_live": "https://main--cc--adobecom.aem.live",
+            "@adobe_prod": "https://www.adobe.com",
+            "@adobe_stage": "https://www.stage.adobe.com"
         },
-        "libs_param":   "maslibs",
+        "libs_param": "maslibs",
         "default_path": "/"
     }
 }
