@@ -352,4 +352,28 @@ describe('Promotion price display with annual template', () => {
             'TVA comprise underline bold <a href="https://www.adobe.com/test.html">link</a> and another <a href="https://www.adobe.com/test2.html">link2</a> and text',
         );
     });
+
+    describe('AU GST tax inclusivity label', () => {
+        it('renders incl. GST label without disabled class when displayTax is true', () => {
+            const template = createPriceTemplate();
+            const html = template(
+                { country: 'AU', language: 'en', displayTax: true },
+                {
+                    formatString: "'A$'#,##0.00",
+                    price: 35.99,
+                    taxTerm: 'GST',
+                    taxDisplay: 'TAX_INCLUSIVE_DETAILS',
+                    commitment: 'YEAR',
+                    term: 'MONTHLY',
+                },
+                {},
+            );
+            const el = document.createElement('span');
+            el.innerHTML = html;
+            const taxEl = el.querySelector('.price-tax-inclusivity');
+            expect(taxEl).to.exist;
+            expect(taxEl.classList.contains('disabled')).to.be.false;
+            expect(taxEl.textContent).to.include('GST');
+        });
+    });
 });
