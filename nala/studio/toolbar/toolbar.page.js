@@ -31,6 +31,8 @@ export default class ToolbarPage {
                 'padding-top': '24px',
                 'margin-bottom': '10px',
                 display: 'block',
+                'box-sizing': 'border-box',
+                width: '100%',
             },
         };
     }

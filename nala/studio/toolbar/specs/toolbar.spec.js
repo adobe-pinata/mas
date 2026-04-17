@@ -8,5 +8,12 @@ export default {
             browserParams: '#page=content&path=nala',
             tags: '@mas-studio @toolbar @toolbar-sticky',
         },
+        {
+            tcid: '1',
+            name: '@studio-toolbar-sticky-table',
+            path: '/studio.html',
+            browserParams: '#page=content&path=nala&render=table',
+            tags: '@mas-studio @toolbar @toolbar-sticky',
+        },
     ],
 };
