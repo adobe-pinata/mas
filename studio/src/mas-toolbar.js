@@ -44,9 +44,13 @@ class MasToolbar extends LitElement {
         :host {
             display: block;
             width: 100%;
-            margin-top: 24px;
+            padding-top: 24px;
             margin-bottom: 10px;
             box-sizing: border-box;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: var(--spectrum-white);
         }
 
         #toolbar {
