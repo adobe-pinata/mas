@@ -766,11 +766,14 @@ Try polyfilling it using "@formatjs/intl-pluralrules"
         right: 0;
         font-size: var(--type-heading-xxs-size);
         font-weight: 500;
-        max-width: 180px;
+        max-width: 45%;
         line-height: 16px;
         text-align: center;
         padding: 8px 11px;
         border-radius: 5px 0 0 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     div[class$='-badge']:dir(rtl) {
