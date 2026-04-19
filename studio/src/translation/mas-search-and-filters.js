@@ -40,7 +40,6 @@ class MasSearchAndFilters extends LitElement {
         this.selectedCreatedByUsers = new ReactiveStore([]);
         this.currentUser = Store.profile;
         this.usersStore = Store.users;
-        this.createdByUsersSubscription = null;
         this.profileSeedSubscription = null;
         this.createdBySeeded = false;
     }
@@ -65,19 +64,11 @@ class MasSearchAndFilters extends LitElement {
         };
 
         if (!this.searchOnly && this.type === TABLE_TYPE.CARDS) {
-            this.createdByController = new ReactiveController(this, [
-                this.selectedCreatedByUsers,
-                Store.profile,
-                Store.users,
-            ]);
-            const createdByCallback = () => {
-                this.#applyFilters();
-                this.requestUpdate();
-            };
-            this.selectedCreatedByUsers.subscribe(createdByCallback);
-            this.createdByUsersSubscription = {
-                unsubscribe: () => this.selectedCreatedByUsers.unsubscribe(createdByCallback),
-            };
+            this.createdByController = new ReactiveController(
+                this,
+                [this.selectedCreatedByUsers, Store.profile, Store.users],
+                () => this.#applyFilters(),
+            );
 
             const trySeedCreatedBy = () => {
                 if (this.createdBySeeded) return;
@@ -108,7 +99,6 @@ class MasSearchAndFilters extends LitElement {
             Store.translationProjects[`all${this.typeUppercased}`].value,
         );
         this.dataSubscription?.unsubscribe();
-        this.createdByUsersSubscription?.unsubscribe();
         this.profileSeedSubscription?.unsubscribe();
     }
 

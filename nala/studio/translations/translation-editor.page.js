@@ -60,7 +60,9 @@ export default class TranslationEditorPage {
         this.createdByFirstUserCheckbox = this.createdByUserPicker.locator('sp-menu-item sp-checkbox').first();
         this.createdByApplyButton = this.createdByUserPicker.getByRole('button', { name: 'Apply' });
         this.createdByResetButton = this.createdByUserPicker.getByRole('button', { name: 'Reset' });
-        this.createdByTags = fragmentsTab.locator('mas-search-and-filters .applied-filters sp-tag');
+        this.createdByTags = fragmentsTab.locator(
+            'mas-search-and-filters .applied-filters sp-tag:has(sp-icon-user)',
+        );
 
         // Filters
         this.filterButtons = page.locator('sp-action-button.filter-trigger');
