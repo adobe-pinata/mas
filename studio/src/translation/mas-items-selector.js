@@ -129,6 +129,7 @@ class MasItemsSelector extends LitElement {
                                           .type=${tab.value}
                                           .searchQuery=${tab.value === this.selectedTab ? this.searchQuery : ''}
                                           .searchOnly=${[TABLE_TYPE.PLACEHOLDERS, TABLE_TYPE.COLLECTIONS].includes(tab.value)}
+                                          .active=${tab.value === this.selectedTab}
                                       ></mas-search-and-filters>
                                   `}
                             <div class="container ${this.viewOnly ? 'view-only' : ''}">

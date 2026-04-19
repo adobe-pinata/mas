@@ -304,4 +304,91 @@ test.describe('M@S Studio Translations Test Suite', () => {
             expect(allTitles.some((t) => t.includes(projectTitle))).toBe(false);
         });
     });
+
+    // 7. @translation-editor-created-by-filter – Created by filter on Fragments tab
+    test(`${features[7].name},${features[7].tags}`, async ({ page, baseURL }) => {
+        const testPage = `${baseURL}${features[7].path}${miloLibs}${features[7].browserParams}`;
+        setTestPage(testPage);
+        await page.goto(testPage);
+        await page.waitForLoadState('domcontentloaded');
+        await expect(translationEditor.form).toBeVisible({ timeout: 15000 });
+
+        let unfilteredCount = 0;
+        let selectedUserLabel = '';
+
+        await test.step('step-1: Open Add Items dialog and navigate to Cards tab', async () => {
+            await translationEditor.addItemsButton.click();
+            await expect(translationEditor.cardsTab).toBeVisible({ timeout: 10000 });
+            await translationEditor.cardsTab.click();
+            await expect(translationEditor.selectItemsTable).toBeVisible({ timeout: 10000 });
+            await expect(translationEditor.tableRows.first()).toBeVisible({ timeout: 30000 });
+            await translationEditor.expectResultCountMatchesTableRows();
+            unfilteredCount = await translationEditor.tableRows.count();
+            expect(unfilteredCount).toBeGreaterThan(0);
+        });
+
+        await test.step('step-2: Open Created by picker and apply first available user', async () => {
+            await expect(translationEditor.createdByFilterButton).toBeVisible({ timeout: 10000 });
+            await translationEditor.createdByFilterButton.click();
+            await expect(translationEditor.createdByPopover).toBeVisible({ timeout: 8000 });
+            await expect(translationEditor.createdByMenuItems.first()).toBeVisible({ timeout: 10000 });
+            const firstItem = translationEditor.createdByMenuItems.first();
+            selectedUserLabel = (await firstItem.textContent())?.trim() || '';
+            expect(selectedUserLabel.length).toBeGreaterThan(0);
+            await firstItem.locator('sp-checkbox').click();
+            await translationEditor.createdByApplyButton.click();
+            await page.waitForTimeout(500);
+        });
+
+        await test.step('step-3: Verify applied chip appears and row count narrows', async () => {
+            await expect(
+                translationEditor.createdByAppliedTag.filter({ hasText: selectedUserLabel }),
+            ).toHaveCount(1);
+            await translationEditor.expectResultCountMatchesTableRows();
+            const filteredCount = await translationEditor.tableRows.count();
+            expect(filteredCount).toBeGreaterThan(0);
+            expect(filteredCount).toBeLessThanOrEqual(unfilteredCount);
+        });
+
+        await test.step('step-4: Delete the chip and verify the count returns to the baseline', async () => {
+            const chip = translationEditor.createdByAppliedTag.filter({ hasText: selectedUserLabel });
+            await chip.locator('button[aria-label="Remove"], .remove').first().click().catch(async () => {
+                await chip.evaluate((el) =>
+                    el.dispatchEvent(new CustomEvent('delete', { bubbles: true, composed: true })),
+                );
+            });
+            await page.waitForTimeout(500);
+            await expect(translationEditor.createdByAppliedTag.filter({ hasText: selectedUserLabel })).toHaveCount(0);
+            await translationEditor.expectResultCountMatchesTableRows();
+            const restoredCount = await translationEditor.tableRows.count();
+            expect(restoredCount).toBe(unfilteredCount);
+        });
+
+        await test.step('step-5: Re-apply filter, switch tabs, and verify it resets', async () => {
+            await translationEditor.createdByFilterButton.click();
+            await expect(translationEditor.createdByPopover).toBeVisible({ timeout: 8000 });
+            await translationEditor.createdByMenuItems.first().locator('sp-checkbox').click();
+            await translationEditor.createdByApplyButton.click();
+            await page.waitForTimeout(500);
+            await expect(translationEditor.createdByAppliedTag.filter({ hasText: selectedUserLabel })).toHaveCount(1);
+
+            await translationEditor.collectionsTab.click();
+            await page.waitForTimeout(500);
+            // Picker should not be rendered on Collections tab
+            const collectionsTabPanel = page.getByRole('tabpanel', { name: 'Collections' });
+            await expect(collectionsTabPanel.locator('mas-search-and-filters mas-user-picker')).toHaveCount(0);
+
+            await translationEditor.placeholdersTab.click();
+            await page.waitForTimeout(500);
+            const placeholdersTabPanel = page.getByRole('tabpanel', { name: 'Placeholders' });
+            await expect(placeholdersTabPanel.locator('mas-search-and-filters mas-user-picker')).toHaveCount(0);
+
+            await translationEditor.cardsTab.click();
+            await expect(translationEditor.tableRows.first()).toBeVisible({ timeout: 15000 });
+            await expect(translationEditor.createdByAppliedTag.filter({ hasText: selectedUserLabel })).toHaveCount(0);
+            await translationEditor.expectResultCountMatchesTableRows();
+            const resetCount = await translationEditor.tableRows.count();
+            expect(resetCount).toBe(unfilteredCount);
+        });
+    });
 });

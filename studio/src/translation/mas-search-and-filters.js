@@ -5,6 +5,8 @@ import { styles } from './mas-search-and-filters.css.js';
 import Store from '../store.js';
 import { FILTER_TYPE, TABLE_TYPE } from '../constants.js';
 import ReactiveController from '../reactivity/reactive-controller.js';
+import { ReactiveStore } from '../reactivity/reactive-store.js';
+import '../fields/user-picker.js';
 
 class MasSearchAndFilters extends LitElement {
     static styles = styles;
@@ -21,6 +23,7 @@ class MasSearchAndFilters extends LitElement {
         customerSegmentOptions: { type: Array },
         productOptions: { type: Array },
         searchOnly: { type: Boolean },
+        active: { type: Boolean },
     };
 
     constructor() {
@@ -34,7 +37,10 @@ class MasSearchAndFilters extends LitElement {
         this.marketSegmentOptions = [];
         this.customerSegmentOptions = [];
         this.productOptions = [];
+        this.active = true;
+        this.createdByUsers = new ReactiveStore([]);
         this.dataSubscription = null;
+        this.createdByUsersSubscription = null;
     }
 
     connectedCallback() {
@@ -43,6 +49,8 @@ class MasSearchAndFilters extends LitElement {
             Store.translationProjects[`all${this.typeUppercased}`],
             Store.translationProjects[`display${this.typeUppercased}`],
             Store[this.type === TABLE_TYPE.PLACEHOLDERS ? 'placeholders' : 'fragments'].list.loading,
+            Store.profile,
+            Store.users,
         ]);
         const dataCallback = () => {
             if (!this.searchOnly) {
@@ -55,6 +63,14 @@ class MasSearchAndFilters extends LitElement {
         this.dataSubscription = {
             unsubscribe: () => Store.translationProjects[`all${this.typeUppercased}`].unsubscribe(dataCallback),
         };
+        const createdByCallback = () => {
+            this.#applyFilters();
+            this.requestUpdate();
+        };
+        this.createdByUsers.subscribe(createdByCallback);
+        this.createdByUsersSubscription = {
+            unsubscribe: () => this.createdByUsers.unsubscribe(createdByCallback),
+        };
     }
 
     disconnectedCallback() {
@@ -63,6 +79,7 @@ class MasSearchAndFilters extends LitElement {
             Store.translationProjects[`all${this.typeUppercased}`].value,
         );
         this.dataSubscription?.unsubscribe();
+        this.createdByUsersSubscription?.unsubscribe();
     }
 
     get typeUppercased() {
@@ -97,6 +114,14 @@ class MasSearchAndFilters extends LitElement {
         for (const id of this.productFilter) {
             const option = productMap.get(id);
             if (option) filters.push({ type: FILTER_TYPE.PRODUCT, id, label: option.title || option.label });
+        }
+        for (const user of this.createdByUsers?.value ?? []) {
+            if (!user?.userPrincipalName) continue;
+            filters.push({
+                type: FILTER_TYPE.CREATED_BY,
+                id: user.userPrincipalName,
+                label: user.displayName || user.userPrincipalName,
+            });
         }
         return filters;
     }
@@ -138,6 +163,11 @@ class MasSearchAndFilters extends LitElement {
             changed.has('productFilter')
         ) {
             this.#applyFilters();
+        }
+        if (changed.has('active') && this.active === false) {
+            if (this.createdByUsers?.value?.length) {
+                this.createdByUsers.set([]);
+            }
         }
     }
 
@@ -203,6 +233,11 @@ class MasSearchAndFilters extends LitElement {
             case FILTER_TYPE.PRODUCT:
                 this.productFilter = this.productFilter.filter((filterId) => filterId !== id);
                 break;
+            case FILTER_TYPE.CREATED_BY:
+                this.createdByUsers.set(
+                    (this.createdByUsers.value || []).filter((user) => user.userPrincipalName !== id),
+                );
+                break;
         }
     }
 
@@ -211,6 +246,7 @@ class MasSearchAndFilters extends LitElement {
         this.marketSegmentFilter = [];
         this.customerSegmentFilter = [];
         this.productFilter = [];
+        this.createdByUsers.set([]);
     }
 
     #renderAppliedFilters() {
@@ -270,6 +306,18 @@ class MasSearchAndFilters extends LitElement {
         `;
     }
 
+    #renderUserPicker() {
+        return html`
+            <mas-user-picker
+                label="Created by"
+                .currentUser=${Store.profile}
+                .selectedUsers=${this.createdByUsers}
+                .users=${Store.users}
+                multiple
+            ></mas-user-picker>
+        `;
+    }
+
     #applyFilters() {
         const source = Store.translationProjects[`all${this.typeUppercased}`].value || [];
         const query = this.searchQuery?.toLowerCase();
@@ -277,6 +325,15 @@ class MasSearchAndFilters extends LitElement {
         const hasMarket = this.marketSegmentFilter?.length > 0;
         const hasCustomer = this.customerSegmentFilter?.length > 0;
         const hasProduct = this.productFilter?.length > 0;
+        const selectedUsers = this.createdByUsers?.value ?? [];
+        const hasUser = selectedUsers.length > 0 && this.type === TABLE_TYPE.CARDS;
+        const userIds = hasUser
+            ? new Set(
+                  selectedUsers
+                      .map((u) => u.userPrincipalName?.toLowerCase())
+                      .filter(Boolean),
+              )
+            : null;
 
         const result = source.filter((fragment) => {
             if (query) {
@@ -312,6 +369,11 @@ class MasSearchAndFilters extends LitElement {
             }
             if (hasProduct) {
                 if (!fragment.tags?.some((tag) => this.productFilter.includes(tag.id))) return false;
+            }
+            if (hasUser) {
+                const createdBy = fragment.created?.by;
+                if (!createdBy) return false;
+                if (!userIds.has(createdBy.toLowerCase())) return false;
             }
             return true;
         });
@@ -352,6 +414,7 @@ class MasSearchAndFilters extends LitElement {
                     FILTER_TYPE.CUSTOMER_SEGMENT,
                 )}
                 ${this.#renderFilterPicker('Product', this.productOptions, this.productFilter, FILTER_TYPE.PRODUCT)}
+                ${this.#renderUserPicker()}
             </div>
             ${this.#renderAppliedFilters()}
         `;
