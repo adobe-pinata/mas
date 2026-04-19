@@ -15,6 +15,7 @@ import PlaceholdersPage from '../studio/placeholders/placeholders.page.js';
 import TranslationsPage from '../studio/translations/translations.page.js';
 import TranslationEditorPage from '../studio/translations/translation-editor.page.js';
 import OSTPage from '../studio/ost.page.js';
+import AcomLingoPage from '../docs/acom/acom-lingo.page.js';
 import WebUtil from './webutil.js';
 
 // Global variables that all tests can access - recreated per test
@@ -32,6 +33,7 @@ let versions;
 let translations;
 let translationEditor;
 let ost;
+let acomLingo;
 let webUtil;
 let clonedCardID = '';
 let currentTestPage = '';
@@ -74,6 +76,7 @@ const masTest = base.extend({
         plans = new ACOMPlansCardPage(page);
         fullPricingExpress = new EXPRESSFullPricingPage(page);
         ost = new OSTPage(page);
+        acomLingo = new AcomLingoPage(page);
         translationEditor = new TranslationEditorPage(page);
         translations = new TranslationsPage(page);
         webUtil = new WebUtil(page);
@@ -127,6 +130,7 @@ export {
     plans,
     fullPricingExpress,
     ost,
+    acomLingo,
     translations,
     translationEditor,
     placeholders,

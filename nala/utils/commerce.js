@@ -38,6 +38,7 @@ const DOCS_GALLERY_PATH = {
     SEGMENT: '/web-components/docs/segment.html',
     SPECIALOFFER: '/web-components/docs/specialoffer.html',
     IMAGE: '/web-components/docs/image.html',
+    ACOM_LINGO: '/web-components/docs/acom-lingo.html',
     CATALOG: '/web-components/docs/catalog.html',
     CHECKOUT_LINK: '/web-components/docs/checkout-link.html',
     MERCH_CARD: '/web-components/docs/merch-card.html',
