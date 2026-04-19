@@ -6,6 +6,7 @@ import Store from '../store.js';
 import { FILTER_TYPE, TABLE_TYPE } from '../constants.js';
 import ReactiveController from '../reactivity/reactive-controller.js';
 import '../fields/user-picker.js';
+import '@spectrum-web-components/icons-workflow/icons/sp-icon-user.js';
 
 class MasSearchAndFilters extends LitElement {
     static styles = styles;
