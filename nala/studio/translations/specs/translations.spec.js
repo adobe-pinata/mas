@@ -73,6 +73,7 @@ export default {
             tcid: '7',
             name: '@translation-editor-created-by-filter',
             path: '/studio.html',
+            data: { createdBy: 'mas-studio' },
             browserParams: '#page=translation-editor&path=nala',
             tags: '@mas-studio @translation-editor @nopr',
             description:

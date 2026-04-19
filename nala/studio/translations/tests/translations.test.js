@@ -307,6 +307,7 @@ test.describe('M@S Studio Translations Test Suite', () => {
 
     // 7. @translation-editor-created-by-filter – Created by filter on Select Items Cards tab
     test(`${features[7].name},${features[7].tags}`, async ({ page, baseURL }) => {
+        const { data } = features[7];
         const testPage = `${baseURL}${features[7].path}${miloLibs}${features[7].browserParams}`;
         setTestPage(testPage);
         await page.goto(testPage);
@@ -330,12 +331,13 @@ test.describe('M@S Studio Translations Test Suite', () => {
             expect(unfilteredCount).toBeGreaterThan(0);
         });
 
-        await test.step('step-3: Open the Created by picker and select the first user', async () => {
+        await test.step('step-3: Open the Created by picker and select a known user', async () => {
             await expect(translationEditor.createdByFilterTrigger).toBeVisible({ timeout: 10000 });
             await translationEditor.createdByFilterTrigger.click();
             await expect(translationEditor.createdByPopover).toBeVisible({ timeout: 8000 });
-            await expect(translationEditor.createdByFirstUserCheckbox).toBeVisible({ timeout: 10000 });
-            await translationEditor.createdByFirstUserCheckbox.click();
+            const userCheckbox = translationEditor.createdByUserCheckbox(data.createdBy);
+            await expect(userCheckbox).toBeVisible({ timeout: 10000 });
+            await userCheckbox.click();
             await translationEditor.createdByApplyButton.click();
             await expect(translationEditor.createdByPopover).not.toBeVisible({ timeout: 5000 });
         });
@@ -351,10 +353,7 @@ test.describe('M@S Studio Translations Test Suite', () => {
 
         await test.step('step-5: Remove the applied tag and verify the full list restores', async () => {
             const tag = translationEditor.createdByAppliedTag.first();
-            await tag.locator('button[aria-label="Delete"], [part="clear-button"], sp-close-button').first().click({ force: true }).catch(async () => {
-                // Fallback: dispatch the delete event directly
-                await tag.evaluate((el) => el.dispatchEvent(new CustomEvent('delete', { bubbles: true, composed: true })));
-            });
+            await tag.evaluate((el) => el.dispatchEvent(new CustomEvent('delete', { bubbles: true, composed: true })));
             await expect(translationEditor.createdByAppliedTag).toHaveCount(0, { timeout: 10000 });
             await translationEditor.expectResultCountMatchesTableRows();
             const text = await translationEditor.fragmentsResultCount.textContent();
